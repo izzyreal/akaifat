@@ -8,6 +8,7 @@ class Pkg(ConanFile):
     generators = "cmake"
     exports_sources = "src/*"
     url = "https://github.com/izzyreal/akaifat.git"
+    requires = ("catch2/2.13.4")
 
     def build(self):
         cmake = CMake(self)
