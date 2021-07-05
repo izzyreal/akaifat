@@ -5,6 +5,7 @@
 
 #include <catch2/catch.hpp>
 
+#include "SuperFloppyFormatter.hpp"
 #include "ImageBlockDevice.hpp"
 #include "FileSystemFactory.hpp"
 
@@ -13,6 +14,30 @@
 using namespace akaifat;
 using namespace akaifat::fat;
 
+TEST_CASE("create disk image", "[image]") {
+    std::remove("tmpakaifat.img");
+    std::fstream img;
+    img.open("tmpakaifat.img", std::ios_base::out);
+    
+    char bytes[1] {' '};
+    for (int i = 0; i < 16 * 1024 * 1024; i++)
+        img.write(bytes, 1);
+    
+    img.close();
+    
+    img.open("tmpakaifat.img", std::ios_base::out | std::ios_base::in);
+    
+    ImageBlockDevice device(img);
+
+    SuperFloppyFormatter formatter(device);
+    formatter.setVolumeLabel("foo");
+    formatter.format();
+    
+    img.close();
+    REQUIRE(TRUE);
+}
+
+/*
 AkaiFatTestsFixture::AkaiFatTestsFixture()
 {
     img.open("/Users/izmar/Desktop/fat16.img", std::ios_base::in | std::ios_base::out);
@@ -33,23 +58,15 @@ AkaiFatTestsFixture::~AkaiFatTestsFixture()
 int AkaiFatTestsFixture::uniqueID = 0;
 
 TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can read", "[read]") {
-//    std::fstream img;
-//    img.open("/Users/izmar/Desktop/fat16.img", std::ios_base::in | std::ios_base::out);
-//
-//    img.seekg(std::ios::beg);
-//
-//    ImageBlockDevice device(img);
-//    auto fs = dynamic_cast<AkaiFatFileSystem *>(FileSystemFactory::createAkai(&device, false));
-//
-//    auto root = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(fs->getRoot());
-
     auto bs = std::dynamic_pointer_cast<Fat16BootSector>(fs->getBootSector());
 
-    auto volumeLabel = bs->getVolumeLabel();
+    auto volumeLabel = StrUtil::trim_copy(bs->getVolumeLabel());
 
+    REQUIRE(volumeLabel == "MPC2000XL");
+    
     auto entries = root->akaiNameIndex;
 
-    printf("- %s ROOT LISTING -\n", StrUtil::trim_copy(volumeLabel).c_str());
+    printf("- %s ROOT LISTING -\n", volumeLabel.c_str());
 
     for (auto &e : entries)
         printf("Name: %s\n", e.first.c_str());
@@ -102,6 +119,5 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can read", "[read]") {
 //    dir->addFile(newFileName);
 
     fs->flush();
-
-    REQUIRE(true);
 }
+*/

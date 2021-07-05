@@ -18,6 +18,7 @@ public:
     bool isClosed() override { return false; }
 
     long getSize() override {
+        img.seekg(0);
         const auto begin = img.tellg();
         img.seekg (0, std::ios::end);
         const auto end = img.tellg();

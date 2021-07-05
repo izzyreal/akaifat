@@ -71,8 +71,8 @@ public:
     long capacity() { return buf.size(); }
 
     void putShort(int offset, short s) {
-        buf[offset] = s & 0xFF00;
-        buf[offset+1] = s & 0x00FF;
+        buf[offset + 1] = (s >> 8);
+        buf[offset] = s & 0xFF;
     }
 };
 }
