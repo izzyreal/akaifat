@@ -112,7 +112,7 @@ std::shared_ptr<FsDirectoryEntry> AkaiFatLfnDirectory::addDirectory(std::string 
 }
 
 std::shared_ptr<FsDirectoryEntry> AkaiFatLfnDirectory::getEntry(std::string &name) {
-    if (akaiNameIndex.find(name) == akaiNameIndex.end()) return {};
+    if (akaiNameIndex.find(name) != akaiNameIndex.end()) return akaiNameIndex[name];
     return akaiNameIndex[StrUtil::to_lower_copy(name)];
 }
 

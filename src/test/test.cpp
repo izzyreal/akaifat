@@ -16,13 +16,14 @@ using namespace akaifat::fat;
 
 const auto IMAGE_NAME = "tmpakaifat.img";
 
-void createImage(bool remove = true)
+void createImage()
 {
-    if (remove) std::remove(IMAGE_NAME);
+    std::remove(IMAGE_NAME);
+    
     std::fstream img;
     img.open(IMAGE_NAME, std::ios_base::out);
     
-    char bytes[1] {' '};
+    char bytes[1] {'\0'};
     for (int i = 0; i < 16 * 1024 * 1024; i++)
         img.write(bytes, 1);
     
@@ -31,7 +32,7 @@ void createImage(bool remove = true)
     img.open(IMAGE_NAME, std::ios_base::out | std::ios_base::in);
     
     ImageBlockDevice device(img);
-    
+        
     SuperFloppyFormatter formatter(device);
     formatter.setVolumeLabel("MPC2000XL");
     formatter.format();
@@ -41,13 +42,13 @@ void createImage(bool remove = true)
 
 TEST_CASE("create disk image", "[image]") {
     bool success = true;
-    
+
     try {
         createImage();
     } catch (const std::exception&) {
         success = false;
     }
-    
+
     REQUIRE(success);
 }
 
@@ -56,8 +57,8 @@ AkaiFatTestsFixture::AkaiFatTestsFixture()
     init();
 }
 
-void AkaiFatTestsFixture::init(bool remove) {
-    createImage(remove);
+void AkaiFatTestsFixture::init(bool create) {
+    if (create) createImage();
     
     img.open(IMAGE_NAME, std::ios_base::in | std::ios_base::out);
     
@@ -70,6 +71,7 @@ void AkaiFatTestsFixture::init(bool remove) {
 }
 
 void AkaiFatTestsFixture::close() {
+    img.flush();
     img.close();
 }
 
@@ -88,7 +90,7 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can read", "[read]") {
 }
 
 TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", "[write]") {
-    std::string newDirName = "aaaa";
+    std::string newDirName = "AAA";
     root->addDirectory(newDirName);
     fs->flush();
     close();
@@ -97,59 +99,62 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     auto bs = std::dynamic_pointer_cast<Fat16BootSector>(fs->getBootSector());
     auto volumeLabel = StrUtil::trim_copy(bs->getVolumeLabel());
 
-    printf("- %s ROOT LISTING -\n", volumeLabel.c_str());
+    REQUIRE (volumeLabel == "MPC2000XL");
+        
+    auto aaaEntry = root->getEntry(newDirName);
+    REQUIRE (aaaEntry->isValid());
+    REQUIRE (aaaEntry->getName() == newDirName);
+    REQUIRE (aaaEntry->isDirectory());
     
-    auto entries = root->akaiNameIndex;
+    auto aaaDir = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(aaaEntry->getDirectory());
     
-    for (auto &e : entries)
-        printf("Name: %s\n", e.first.c_str());
+    std::string newFileName = "TEST.BIN";
+    auto newFileEntry = aaaDir->addFile(newFileName);
     
-    /*
-     auto test1 = entries["test1"];
-     
-     auto dir = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(test1->getDirectory());
-     printf("- TEST1 LISTING -\n");
-     auto dirEntries = dir->akaiNameIndex;
-     
-     for (auto &e : dirEntries) {
-     
-     printf("Name: %s\n", e.second->getName().c_str());
-     if (e.second->isFile())
-     {
-     auto length = e.second->getFile()->getLength();
-     printf("Length: %li\n", length);
-     }
-     if (e.second->getName() == "SNARE4.SND") {
-     //            ByteBuffer newData(100);
-     //            for (int i = 0; i < newData.capacity(); i++)
-     //                newData.put((char)(i));
-     //            newData.flip();
-     //            e.second->getFile()->setLength(100);
-     //            e.second->getFile()->write(0, newData);
-     //            e.second->getFile()->flush();
-     printf("SNARE4.SND data:");
-     ByteBuffer buf(e.second->getFile()->getLength());
-     e.second->getFile()->read(0, buf);
-     buf.rewind();
-     for (int i = 0; i < 100; i++)
-     printf("%c", buf.get());
-     printf("\n");
-     
-     //            std::fstream output;
-     //            output.open("/Users/izmar/Desktop/SNARE5.SND", std::ios_base::out | std::ios_base::binary);
-     //            auto buf_ = buf.getBuffer();
-     //            output.write(&buf_[0], buf.capacity());
-     //            output.close();
-     }
-     }
-     
-     //    std::string newDirName = "aaaa";
-     //    root->addDirectory(newDirName);
-     
-     
-     //    std::string toRemove = "snare4.snd";
-     //    dir->remove(toRemove);
-     //    std::string newFileName = "SNARE4.SND";
-     //    dir->addFile(newFileName);
-     */
+    auto newFile = newFileEntry->getFile();
+    newFile->setLength(10000);
+    
+    ByteBuffer src(10000);
+    
+    for (int i = 0; i < 10000; i++)
+        src.put(i % 256);
+    src.flip();
+    newFile->write(0, src);
+    
+    fs->flush();
+    
+    close();
+    
+    init(false);
+        
+    aaaEntry = root->getEntry(newDirName);
+    aaaDir = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(aaaEntry->getDirectory());
+    
+    newFileEntry = aaaDir->getEntry(newFileName);
+    
+    REQUIRE (newFileEntry->isValid());
+    REQUIRE (newFileEntry->getName() == newFileName);
+    REQUIRE (newFileEntry->isFile());
+    
+    newFile = aaaDir->getEntry(newFileName)->getFile();
+    
+    REQUIRE (newFile->getLength() == 10000);
+    
+    ByteBuffer dest(10000);
+    
+    newFile->read(0, dest);
+    
+    bool isTheSame = true;
+    
+    src.rewind();
+    dest.flip();
+    
+    for (int i = 0; i < 10000; i++) {
+        if (src.get() != dest.get()) {
+            isTheSame = false;
+            break;
+        }
+    }
+        
+    REQUIRE (isTheSame);
 }
