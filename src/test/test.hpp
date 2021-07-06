@@ -14,6 +14,8 @@ protected:
 public:
     AkaiFatTestsFixture();
     ~AkaiFatTestsFixture();
+    void init(bool remove = true);
+    void close();
 protected:
     int getID() {
         return ++uniqueID;
