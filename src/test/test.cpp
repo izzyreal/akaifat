@@ -96,25 +96,40 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can read", "[read]") {
 
 
 TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", "[write]") {
+    // BEGIN Add directory
     std::string newDirName = "AAA";
     root->addDirectory(newDirName);
     close();
+    // END Add directory
+
+
+    // BEGIN Volume label
     init(false);
     
     auto bs = std::dynamic_pointer_cast<Fat16BootSector>(fs->getBootSector());
     auto volumeLabel = StrUtil::trim_copy(bs->getVolumeLabel());
     
     REQUIRE (volumeLabel == "MPC2000XL");
+    // END Volume label
+
     
+    // BEGIN Read new directory
     auto aaaEntry = root->getEntry(newDirName);
     REQUIRE (aaaEntry->isValid());
     REQUIRE (aaaEntry->getName() == newDirName);
     REQUIRE (aaaEntry->isDirectory());
-    
+    // END Read new directory
+
+    // BEGIN Add file
     auto aaaDir = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(aaaEntry->getDirectory());
     
     std::string newFileName = "TEST_WITH16CHARS.BIN";
     auto newFileEntry = aaaDir->addFile(newFileName);
+    
+    REQUIRE (newFileEntry);
+    REQUIRE (newFileEntry->isValid());
+    REQUIRE (newFileEntry->getName() == newFileName);
+    REQUIRE (newFileEntry->isFile());
     
     auto newFile = newFileEntry->getFile();
     newFile->setLength(10000);
@@ -127,7 +142,9 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     newFile->write(0, src);
     
     close();
-    
+    // END Add file
+
+    // BEGIN Read and verify new file
     init(false);
     
     aaaEntry = root->getEntry(newDirName);
@@ -162,15 +179,42 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     REQUIRE (isTheSame);
     
     close();
-    
+    // END Read and verify new file
+
+    // BEGIN Rename file
+    init(false);
+
+    aaaDir = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(root->getEntry(newDirName)->getDirectory());
+    newFileEntry = aaaDir->getEntry(newFileName);
+
+    std::string renamedFileName = "FOOBAR.BIN";
+    newFileEntry->setName(renamedFileName);
+
+    close();
     init(false);
     
-    aaaEntry = root->getEntry(newDirName);
-    aaaDir = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(aaaEntry->getDirectory());
-    
-    aaaDir->remove(newFileName);
-    
-    aaaDir = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(aaaEntry->getDirectory());
-    
+    aaaDir = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(root->getEntry(newDirName)->getDirectory());
+
     REQUIRE (!aaaDir->getEntry(newFileName));
+    REQUIRE (aaaDir->getEntry(renamedFileName));
+    close();
+    // END Rename file
+    
+    // BEGIN Remove file
+    init(false);
+    
+    aaaDir = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(root->getEntry(newDirName)->getDirectory());
+    
+    aaaDir->remove(renamedFileName);
+    
+    close();
+    init(false);
+
+    aaaDir = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(root->getEntry(newDirName)->getDirectory());
+    
+    REQUIRE (!aaaDir->getEntry(renamedFileName));
+    REQUIRE (!aaaDir->getEntry(newFileName));
+    // END Remove file
+    
+    // Don't call close() because it will be called by the fixture's destructor
 }
