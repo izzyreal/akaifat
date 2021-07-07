@@ -132,11 +132,14 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     REQUIRE (newFileEntry->isFile());
     
     auto newFile = newFileEntry->getFile();
-    newFile->setLength(10000);
     
-    ByteBuffer src(10000);
+    const auto FILE_LENGTH = 1024 * 1024;
+
+    newFile->setLength(FILE_LENGTH);
     
-    for (int i = 0; i < 10000; i++)
+    ByteBuffer src(FILE_LENGTH);
+    
+    for (int i = 0; i < FILE_LENGTH; i++)
         src.put(i % 256);
     src.flip();
     newFile->write(0, src);
@@ -157,10 +160,10 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     REQUIRE (newFileEntry->isFile());
     
     newFile = aaaDir->getEntry(newFileName)->getFile();
+        
+    REQUIRE (newFile->getLength() == FILE_LENGTH);
     
-    REQUIRE (newFile->getLength() == 10000);
-    
-    ByteBuffer dest(10000);
+    ByteBuffer dest(FILE_LENGTH);
     
     newFile->read(0, dest);
     
@@ -169,7 +172,7 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     src.rewind();
     dest.flip();
     
-    for (int i = 0; i < 10000; i++) {
+    for (int i = 0; i < FILE_LENGTH; i++) {
         if (src.get() != dest.get()) {
             isTheSame = false;
             break;
@@ -200,20 +203,36 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     close();
     // END Rename file
     
+    // BEGIN Move and rename file
+    init(false);
+
+    aaaDir = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(root->getEntry(newDirName)->getDirectory());
+    std::dynamic_pointer_cast<AkaiFatLfnDirectoryEntry>(aaaDir->getEntry(renamedFileName))->moveTo(root, newFileName);
+    
+    close();
+    init(false);
+    newFileEntry = root->getEntry(newFileName);
+    REQUIRE(newFileEntry->isValid());
+    REQUIRE(newFileEntry->getName() == newFileName);
+    REQUIRE(newFileEntry->isFile());
+
+    aaaDir = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(root->getEntry(newDirName)->getDirectory());
+
+    auto noNewFileEntry = aaaDir->getEntry(newFileName);
+    REQUIRE(!noNewFileEntry);
+    
+    close();
+    // END Move and rename file
+    
     // BEGIN Remove file
     init(false);
-    
-    aaaDir = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(root->getEntry(newDirName)->getDirectory());
-    
-    aaaDir->remove(renamedFileName);
+    REQUIRE(root->getEntry(newFileName));
+    root->remove(newFileName);
     
     close();
     init(false);
 
-    aaaDir = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(root->getEntry(newDirName)->getDirectory());
-    
-    REQUIRE (!aaaDir->getEntry(renamedFileName));
-    REQUIRE (!aaaDir->getEntry(newFileName));
+    REQUIRE (!root->getEntry(newFileName));
     // END Remove file
     
     // Don't call close() because it will be called by the fixture's destructor
