@@ -18,7 +18,7 @@ private:
     static std::string& DEFAULT_OEM_NAME() { static std::string result = "        "; return result; }
     static const int MAX_DIRECTORY = 512;
     
-    BlockDevice& device;
+    std::shared_ptr<BlockDevice> device;
     int fatCount;
     std::string label;
     std::string oemName;
@@ -33,7 +33,7 @@ private:
         if (fatCount != 2) throw std::runtime_error(
                                                     "number of FATs must be 2");
         
-        long sectors = device.getSize() / device.getSectorSize();
+        long sectors = device->getSize() / device->getSectorSize();
         
         if (sectors <= 8400) throw std::runtime_error(
                                                       "disk too small for FAT16 (" + std::to_string(sectors) + ")");
@@ -76,7 +76,7 @@ private:
     }
     
     int sectorsPerFat(int rootDirEntries, int totalSectors) {
-            const int bps = device.getSectorSize();
+            const int bps = device->getSectorSize();
             const int rootDirSectors =
                     ((rootDirEntries * 32) + (bps - 1)) / bps;
             const long tmp1 =
@@ -94,15 +94,15 @@ public:
     }
     
     akaifat::fat::AkaiFatFileSystem* format() {
-        const int sectorSize = device.getSectorSize();
-        const int totalSectors = (int)(device.getSize() / sectorSize);
+        const int sectorSize = device->getSectorSize();
+        const int totalSectors = (int)(device->getSize() / sectorSize);
         
         if (sectorsPerCluster == 0) throw std::runtime_error("sectorsPerCluster == 0");
         
-        auto f16bs = std::make_shared<akaifat::fat::Fat16BootSector>(&device);
+        auto f16bs = std::make_shared<akaifat::fat::Fat16BootSector>(device);
         initBootSector(*f16bs.get());
         
-        int rootDirEntries = rootDirectorySize(device.getSectorSize(), totalSectors);
+        int rootDirEntries = rootDirectorySize(device->getSectorSize(), totalSectors);
         
         f16bs->setRootDirEntryCount(rootDirEntries);
         f16bs->setSectorsPerFat(sectorsPerFat(rootDirEntries, totalSectors));
@@ -123,7 +123,7 @@ public:
         
         f16bs->write();
         
-        auto fs = akaifat::fat::AkaiFatFileSystem::read(&device, false);
+        auto fs = akaifat::fat::AkaiFatFileSystem::read(device, false);
         
         if (!label.empty())
             fs->setVolumeLabel(label);
@@ -138,7 +138,7 @@ public:
         fatType = _fatType;
     }
     
-    SuperFloppyFormatter(BlockDevice& _device)
+    SuperFloppyFormatter(std::shared_ptr<BlockDevice> _device)
     : device (_device), oemName (DEFAULT_OEM_NAME()),
     fatCount (DEFAULT_FAT_COUNT) {
         setFatType(std::make_shared<akaifat::fat::Fat16Type>());

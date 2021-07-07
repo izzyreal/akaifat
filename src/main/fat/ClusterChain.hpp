@@ -10,7 +10,7 @@ namespace akaifat::fat {
     class ClusterChain : public akaifat::AbstractFsObject {
     private:
         Fat *fat;
-        BlockDevice *device;
+        std::shared_ptr<BlockDevice> device;
         int clusterSize;
         long dataOffset;
 
@@ -48,7 +48,7 @@ namespace akaifat::fat {
             return fat;
         }
 
-        BlockDevice *getDevice() {
+        std::shared_ptr<BlockDevice> getDevice() {
             return device;
         }
 

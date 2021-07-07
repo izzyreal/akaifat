@@ -5,7 +5,7 @@
 using namespace akaifat;
 using namespace akaifat::fat;
 
-std::shared_ptr<BootSector> BootSector::read(BlockDevice* device) {
+std::shared_ptr<BootSector> BootSector::read(std::shared_ptr<BlockDevice> device) {
     ByteBuffer bb(512);
     device->read(0, bb);
     

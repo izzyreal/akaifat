@@ -23,7 +23,7 @@ namespace akaifat::fat {
         static const int MAX_VOLUME_LABEL_LENGTH = 11;
         static const int EXTENDED_BOOT_SIGNATURE_OFFSET = 0x26;
 
-        explicit Fat16BootSector(BlockDevice *device)
+        explicit Fat16BootSector(std::shared_ptr<BlockDevice> device)
                 : BootSector(device) {
         }
 

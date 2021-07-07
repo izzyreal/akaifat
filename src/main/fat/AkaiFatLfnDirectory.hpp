@@ -19,7 +19,7 @@ namespace akaifat::fat {
 
     class AkaiFatLfnDirectoryEntry;
 
-    class AkaiFatLfnDirectory : public akaifat::AbstractFsObject, public akaifat::FsDirectory {
+    class AkaiFatLfnDirectory : public akaifat::AbstractFsObject, public akaifat::FsDirectory, public std::enable_shared_from_this<AkaiFatLfnDirectory> {
     public:
         std::shared_ptr<AbstractDirectory> dir;
         std::map<std::string, std::shared_ptr<AkaiFatLfnDirectoryEntry>> akaiNameIndex;
@@ -51,6 +51,8 @@ namespace akaifat::fat {
 
         void linkEntry(const std::shared_ptr<AkaiFatLfnDirectoryEntry> &entry);
 
+        void parseLfn();
+
     private:
         std::set<std::string> usedAkaiNames;
         std::shared_ptr<Fat> fat;
@@ -58,8 +60,6 @@ namespace akaifat::fat {
         std::map<std::shared_ptr<FatDirectoryEntry>, std::shared_ptr<AkaiFatLfnDirectory>> entryToDirectory;
 
         void checkUniqueName(std::string &name);
-
-        void parseLfn();
 
         void updateLFN();
 

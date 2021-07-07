@@ -19,14 +19,14 @@ private:
     long filesOffset;
             
 public:
-    AkaiFatFileSystem(BlockDevice* device, bool readOnly,
+    AkaiFatFileSystem(std::shared_ptr<BlockDevice> device, bool readOnly,
             bool ignoreFatDifferences);
     
-    AkaiFatFileSystem(BlockDevice* api, bool readOnly)
+    AkaiFatFileSystem(std::shared_ptr<BlockDevice> device, bool readOnly)
     // Should ignoreFatDifferences be false?
-    : AkaiFatFileSystem (api, readOnly, true) {}
+    : AkaiFatFileSystem (device, readOnly, true) {}
 
-    static AkaiFatFileSystem* read(BlockDevice* device, bool readOnly);
+    static AkaiFatFileSystem* read(std::shared_ptr<BlockDevice> device, bool readOnly);
 
     long getFilesOffset();
 

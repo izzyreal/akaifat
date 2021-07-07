@@ -16,7 +16,7 @@ namespace akaifat::fat {
         static const int EXTENDED_BOOT_SIGNATURE = 0x29;
         static const int SIZE = 512;
 
-        static std::shared_ptr<BootSector> read(BlockDevice *device);
+        static std::shared_ptr<BootSector> read(std::shared_ptr<BlockDevice> device);
 
         virtual FatType *getFatType() = 0;
 
@@ -227,7 +227,7 @@ namespace akaifat::fat {
         }
 
     protected:
-        explicit BootSector(BlockDevice *device)
+        explicit BootSector(std::shared_ptr<BlockDevice> device)
                 : Sector(device, 0, SIZE) {
             markDirty();
         }

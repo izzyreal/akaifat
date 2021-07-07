@@ -16,7 +16,7 @@ private:
     int lastClusterIndex;
     int sectorCount;
     int sectorSize;
-    BlockDevice* device;
+    std::shared_ptr<BlockDevice> device;
     
     int lastAllocatedCluster;
 
@@ -114,7 +114,7 @@ public:
         return bs;
     }
 
-    BlockDevice* getDevice() {
+    std::shared_ptr<BlockDevice> getDevice() {
         return device;
     }
    

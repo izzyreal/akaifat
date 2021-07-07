@@ -31,7 +31,7 @@ void createImage()
     
     img.open(IMAGE_NAME, std::ios_base::out | std::ios_base::in);
     
-    ImageBlockDevice device(img);
+    auto device = std::make_shared<ImageBlockDevice>(img);
     
     SuperFloppyFormatter formatter(device);
     formatter.setVolumeLabel("MPC2000XL");
@@ -65,12 +65,17 @@ void AkaiFatTestsFixture::init(bool create) {
     img.seekg(std::ios::beg);
     
     device = std::make_shared<ImageBlockDevice>(img);
-    fs = dynamic_cast<AkaiFatFileSystem *>(FileSystemFactory::createAkai(device.get(), false));
+    fs = dynamic_cast<AkaiFatFileSystem *>(FileSystemFactory::createAkai(device, false));
     
     root = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(fs->getRoot());
 }
 
 void AkaiFatTestsFixture::close() {
+    fs->flush();
+    fs->close();
+    
+    delete fs;
+    
     img.flush();
     img.close();
 }
@@ -89,10 +94,10 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can read", "[read]") {
     REQUIRE(volumeLabel == "MPC2000XL");
 }
 
+
 TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", "[write]") {
     std::string newDirName = "AAA";
     root->addDirectory(newDirName);
-    fs->flush();
     close();
     init(false);
     
@@ -121,8 +126,6 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     src.flip();
     newFile->write(0, src);
     
-    fs->flush();
-    
     close();
     
     init(false);
@@ -131,7 +134,7 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     aaaDir = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(aaaEntry->getDirectory());
     
     newFileEntry = aaaDir->getEntry(newFileName);
-    
+    REQUIRE (newFileEntry);
     REQUIRE (newFileEntry->isValid());
     REQUIRE (newFileEntry->getName() == newFileName);
     REQUIRE (newFileEntry->isFile());
@@ -160,16 +163,14 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     
     close();
     
-//    init(false);
+    init(false);
     
-//    aaaEntry = root->getEntry(newDirName);
-//    aaaDir = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(aaaEntry->getDirectory());
-//    aaaDir->remove(newFileName);
-//    fs->flush();
+    aaaEntry = root->getEntry(newDirName);
+    aaaDir = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(aaaEntry->getDirectory());
     
-    //    aaaDir = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(aaaEntry->getDirectory());
+    aaaDir->remove(newFileName);
     
-    //    REQUIRE (aaaDir->akaiNameIndex.find(newFileName) == end(aaaDir->akaiNameIndex));
+    aaaDir = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(aaaEntry->getDirectory());
     
-    close();
+    REQUIRE (!aaaDir->getEntry(newFileName));
 }

@@ -9,7 +9,7 @@ using namespace akaifat;
 
 AkaiFatLfnDirectory::AkaiFatLfnDirectory(std::shared_ptr<AbstractDirectory> _dir, std::shared_ptr<Fat> _fat, bool readOnly)
         : AbstractFsObject(readOnly), dir(std::move(_dir)), fat(std::move(_fat)) {
-    parseLfn();
+//    parseLfn();
 }
 
 bool AkaiFatLfnDirectory::isDirReadOnly() {
@@ -44,6 +44,7 @@ std::shared_ptr<AkaiFatLfnDirectory> AkaiFatLfnDirectory::getDirectory(const std
     if (entryToDirectory.find(entry) == end(entryToDirectory)) {
         auto storage = read(entry, fat.get());
         result = std::make_shared<AkaiFatLfnDirectory>(storage, fat, isReadOnly());
+        result->parseLfn();
         entryToDirectory[entry] = result;
     } else {
         result = entryToDirectory[entry];
@@ -58,7 +59,7 @@ std::shared_ptr<FsDirectoryEntry> AkaiFatLfnDirectory::addFile(std::string &name
 
     StrUtil::trim(name);
 
-    auto entry = std::make_shared<AkaiFatLfnDirectoryEntry>(name, this, false);
+    auto entry = std::make_shared<AkaiFatLfnDirectoryEntry>(name, shared_from_this(), false);
 
     dir->addEntry(entry->realEntry);
     auto nameLower = StrUtil::to_lower_copy(name);
@@ -92,7 +93,7 @@ std::shared_ptr<FsDirectoryEntry> AkaiFatLfnDirectory::addDirectory(std::string 
     auto real = dir->createSub(fat.get());
     ShortName sn(name);
     real->setAkaiName(name);
-    auto e = std::make_shared<AkaiFatLfnDirectoryEntry>(this, real, name);
+    auto e = std::make_shared<AkaiFatLfnDirectoryEntry>(shared_from_this(), real, name);
 
     try {
         dir->addEntry(real);
@@ -113,7 +114,11 @@ std::shared_ptr<FsDirectoryEntry> AkaiFatLfnDirectory::addDirectory(std::string 
 
 std::shared_ptr<FsDirectoryEntry> AkaiFatLfnDirectory::getEntry(std::string &name) {
     if (akaiNameIndex.find(name) != akaiNameIndex.end()) return akaiNameIndex[name];
-    return akaiNameIndex[StrUtil::to_lower_copy(name)];
+    
+    if (akaiNameIndex.find(StrUtil::to_lower_copy(name)) != akaiNameIndex.end())
+        return akaiNameIndex[StrUtil::to_lower_copy(name)];
+    
+    return {};
 }
 
 void AkaiFatLfnDirectory::flush() {
@@ -182,7 +187,7 @@ void AkaiFatLfnDirectory::linkEntry(const std::shared_ptr<AkaiFatLfnDirectoryEnt
 
 void AkaiFatLfnDirectory::checkUniqueName(std::string &name) {
     std::string lowerName = StrUtil::to_lower_copy(name);
-
+    
     if (!usedAkaiNames.emplace(lowerName).second) {
         throw std::runtime_error("an entry named " + name + " already exists");
     } else {
@@ -215,7 +220,7 @@ void AkaiFatLfnDirectory::parseLfn() {
         if (i >= size)
             break;
 
-        auto current = AkaiFatLfnDirectoryEntry::extract(this, offset, ++i - offset);
+        auto current = AkaiFatLfnDirectoryEntry::extract(shared_from_this(), offset, ++i - offset);
 
         if (!current->realEntry->isDeleted() && current->isValid()) {
             auto name = current->getName();

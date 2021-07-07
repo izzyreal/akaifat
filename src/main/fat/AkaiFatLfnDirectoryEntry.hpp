@@ -20,7 +20,7 @@ namespace akaifat::fat {
         std::string fileName;
 
     public:
-        AkaiFatLfnDirectoryEntry(const std::string &name, AkaiFatLfnDirectory *akaiFatLfnDirectory, bool directory)
+        AkaiFatLfnDirectoryEntry(const std::string &name, std::shared_ptr<AkaiFatLfnDirectory>  akaiFatLfnDirectory, bool directory)
                 : AbstractFsObject(false), fileName(name), parent(akaiFatLfnDirectory) {
             realEntry = FatDirectoryEntry::create(directory);
             realEntry->setAkaiName(name);
@@ -30,13 +30,13 @@ namespace akaifat::fat {
 
         bool isReadOnly() override { return AbstractFsObject::isReadOnly(); }
 
-        AkaiFatLfnDirectoryEntry(AkaiFatLfnDirectory *akaiFatLfnDirectory, std::shared_ptr<FatDirectoryEntry> _realEntry,
+        AkaiFatLfnDirectoryEntry(std::shared_ptr<AkaiFatLfnDirectory> akaiFatLfnDirectory, std::shared_ptr<FatDirectoryEntry> _realEntry,
                                  std::string _fileName)
                 : AbstractFsObject(akaiFatLfnDirectory->isReadOnly()), parent(akaiFatLfnDirectory),
                   realEntry(std::move(_realEntry)), fileName(std::move(_fileName)) {
         }
 
-        static std::shared_ptr<AkaiFatLfnDirectoryEntry> extract(AkaiFatLfnDirectory *dir, int offset, int len) {
+        static std::shared_ptr<AkaiFatLfnDirectoryEntry> extract(std::shared_ptr<AkaiFatLfnDirectory> dir, int offset, int len) {
             auto realEntry = dir->dir->getEntry(offset + len - 1);
             std::string shortName = realEntry->getShortName().asSimpleString();
             std::string akaiPart = StrUtil::trim_copy(AkaiPart::parse(realEntry->data).asSimpleString());

@@ -8,7 +8,7 @@
 namespace akaifat::fat {
 class Sector {
 private:
-    BlockDevice* device;
+    std::shared_ptr<BlockDevice> device;
     long offset;
     
     bool dirty;
@@ -16,7 +16,7 @@ private:
 protected:
     ByteBuffer buffer;
 
-    Sector(BlockDevice* _device, long _offset, int size)
+    Sector(std::shared_ptr<BlockDevice> _device, long _offset, int size)
     : device (_device), offset (_offset), buffer (ByteBuffer(size)), dirty (true)
     {
     }
@@ -72,7 +72,7 @@ public:
         return dirty;
     }
     
-    BlockDevice* getDevice() {
+    std::shared_ptr<BlockDevice> getDevice() {
         return device;
     }
 

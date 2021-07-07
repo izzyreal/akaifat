@@ -5,7 +5,7 @@
 namespace akaifat::fat {
     class Fat16RootDirectory : public AbstractDirectory {
     private:
-        BlockDevice *device;
+        std::shared_ptr<BlockDevice> device;
         long deviceOffset;
 
     protected:
