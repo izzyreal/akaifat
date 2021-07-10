@@ -2,7 +2,7 @@
 
 #include "BlockDevice.hpp"
 
-#include "ByteBuffer.hpp"
+#include "util/ByteBuffer.hpp"
 
 #include <exception>
 #include <fstream>

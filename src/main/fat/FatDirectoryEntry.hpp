@@ -3,7 +3,7 @@
 #include "../AbstractFsObject.hpp"
 
 #include "AbstractDirectory.hpp"
-#include "../ByteBuffer.hpp"
+#include "../util/ByteBuffer.hpp"
 #include "LittleEndian.hpp"
 #include "ShortName.hpp"
 

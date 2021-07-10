@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../strutil.hpp"
+#include "../util/strutil.hpp"
 
 #include "LittleEndian.hpp"
 

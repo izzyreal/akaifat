@@ -5,14 +5,17 @@
 
 #include <catch2/catch.hpp>
 
-#include "SuperFloppyFormatter.hpp"
+#include "util/SuperFloppyFormatter.hpp"
 #include "ImageBlockDevice.hpp"
 #include "FileSystemFactory.hpp"
 
 #include "fat/AkaiFatLfnDirectoryEntry.hpp"
 
+#include "util/RemovableVolumes.h"
+
 using namespace akaifat;
 using namespace akaifat::fat;
+using namespace akaifat::util;
 
 const auto IMAGE_NAME = "tmpakaifat.img";
 
@@ -38,6 +41,13 @@ void createImage()
     formatter.format();
     
     img.close();
+}
+
+TEST_CASE("list removable volumes", "[volumes]")
+{
+    RemovableVolumes rv;
+    rv.init();
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 }
 
 TEST_CASE("create disk image", "[image]") {

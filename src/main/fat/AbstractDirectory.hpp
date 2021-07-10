@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../ByteBuffer.hpp"
+#include "../util/ByteBuffer.hpp"
 
 #include <vector>
 #include <string>

@@ -31,6 +31,7 @@ file(
     LIST_DIRECTORIES false
     RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
     "${_src_root_path_main}/*.c*"
+    "${_src_root_path_main}/*.mm"
     "${_src_root_path_main}/*.cpp*"
     "${_src_root_path_main}/*.h*"
     "${_src_root_path_main}/*.hpp*"
