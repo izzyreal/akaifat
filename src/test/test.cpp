@@ -50,10 +50,10 @@ TEST_CASE("list removable volumes", "[volumes]")
     
     class TestChangeListener : public VolumeChangeListener {
     public:
-        std::vector<std::string> removableVolumeNames;
+        std::vector<std::string> bsdNames;
         void processChange(std::string change) {
             printf("We can do what we want now with: %s\n", change.c_str());
-            removableVolumeNames.emplace_back(change);
+            bsdNames.emplace_back(change);
         }
     };
     
@@ -62,18 +62,30 @@ TEST_CASE("list removable volumes", "[volumes]")
     removableVolumes.addListener(&listener);
     
     removableVolumes.init();
-
+    
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-        
-    for (auto& name : listener.removableVolumeNames)
+    
+    for (auto& name : listener.bsdNames)
     {
         std::fstream volumeStream = VolumeMounter::mount(name);
-        if (volumeStream.is_open())
-            printf("Volume %s has been mounted\n", name.c_str());
-        else
-            printf("Volume %s has NOT been mounted!\n", name.c_str());
+        
+        if (volumeStream.is_open()) {
+            printf("BSD name %s has been mounted\n", name.c_str());
+            auto device = std::make_shared<ImageBlockDevice>(volumeStream);
+            auto fs = dynamic_cast<AkaiFatFileSystem *>(FileSystemFactory::createAkai(device, true));
+            auto root = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(fs->getRoot());
+            for (auto& e : root->akaiNameIndex) {
+                printf("Entry: %s\n", e.first.c_str());
+            }
+        }
+        else {
+            printf("BSD name %s has NOT been mounted!\n", name.c_str());
+            continue;
+        }
     }
 }
+
+/*
 
 TEST_CASE("create disk image", "[image]") {
     bool success = true;
@@ -136,8 +148,8 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     root->addDirectory(newDirName);
     close();
     // END Add directory
-
-
+    
+    
     // BEGIN Volume label
     init(false);
     
@@ -146,7 +158,7 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     
     REQUIRE (volumeLabel == "MPC2000XL");
     // END Volume label
-
+    
     
     // BEGIN Read new directory
     auto aaaEntry = root->getEntry(newDirName);
@@ -154,7 +166,7 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     REQUIRE (aaaEntry->getName() == newDirName);
     REQUIRE (aaaEntry->isDirectory());
     // END Read new directory
-
+    
     // BEGIN Add file
     auto aaaDir = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(aaaEntry->getDirectory());
     
@@ -169,7 +181,7 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     auto newFile = newFileEntry->getFile();
     
     const auto FILE_LENGTH = 1024 * 1024;
-
+    
     newFile->setLength(FILE_LENGTH);
     
     ByteBuffer src(FILE_LENGTH);
@@ -181,7 +193,7 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     
     close();
     // END Add file
-
+    
     // BEGIN Read and verify new file
     init(false);
     
@@ -195,7 +207,7 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     REQUIRE (newFileEntry->isFile());
     
     newFile = aaaDir->getEntry(newFileName)->getFile();
-        
+    
     REQUIRE (newFile->getLength() == FILE_LENGTH);
     
     ByteBuffer dest(FILE_LENGTH);
@@ -218,21 +230,21 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     
     close();
     // END Read and verify new file
-
+    
     // BEGIN Rename file
     init(false);
-
+    
     aaaDir = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(root->getEntry(newDirName)->getDirectory());
     newFileEntry = aaaDir->getEntry(newFileName);
-
+    
     std::string renamedFileName = "FOOBAR.BIN";
     newFileEntry->setName(renamedFileName);
-
+    
     close();
     init(false);
     
     aaaDir = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(root->getEntry(newDirName)->getDirectory());
-
+    
     REQUIRE (!aaaDir->getEntry(newFileName));
     REQUIRE (aaaDir->getEntry(renamedFileName));
     close();
@@ -240,7 +252,7 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     
     // BEGIN Move and rename file
     init(false);
-
+    
     aaaDir = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(root->getEntry(newDirName)->getDirectory());
     std::dynamic_pointer_cast<AkaiFatLfnDirectoryEntry>(aaaDir->getEntry(renamedFileName))->moveTo(root, newFileName);
     
@@ -250,9 +262,9 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     REQUIRE(newFileEntry->isValid());
     REQUIRE(newFileEntry->getName() == newFileName);
     REQUIRE(newFileEntry->isFile());
-
+    
     aaaDir = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(root->getEntry(newDirName)->getDirectory());
-
+    
     auto noNewFileEntry = aaaDir->getEntry(newFileName);
     REQUIRE(!noNewFileEntry);
     
@@ -266,9 +278,10 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     
     close();
     init(false);
-
+    
     REQUIRE (!root->getEntry(newFileName));
     // END Remove file
     
     // Don't call close() because it will be called by the fixture's destructor
 }
+*/

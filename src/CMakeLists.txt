@@ -30,12 +30,13 @@ file(
     GLOB_RECURSE _source_list_main 
     LIST_DIRECTORIES false
     RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-    "${_src_root_path_main}/*.c*"
+    "${_src_root_path_main}/*.c"
+    "${_src_root_path_main}/*.m"
     "${_src_root_path_main}/*.mm"
-    "${_src_root_path_main}/*.cpp*"
-    "${_src_root_path_main}/*.h*"
-    "${_src_root_path_main}/*.hpp*"
-	"${_src_root_path_main}/*.hxx*"
+    "${_src_root_path_main}/*.cpp"
+    "${_src_root_path_main}/*.h"
+    "${_src_root_path_main}/*.hpp"
+	"${_src_root_path_main}/*.hxx"
 )
 
 foreach(_source IN ITEMS ${_source_list_main})

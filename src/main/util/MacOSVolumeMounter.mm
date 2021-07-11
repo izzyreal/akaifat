@@ -5,10 +5,12 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <Foundation/Foundation.h>
+
 #include <Security/Authorization.h>
 #include <Security/AuthorizationTags.h>
 
-#include <vector>
+#include <string>
 
 using namespace akaifat::util;
 
@@ -18,7 +20,7 @@ char *addfiletopath(const char *path, const char *filename)
 {
     char *outbuf;
     char *lc;
-
+    
     lc = (char *)path + strlen(path) - 1;
     if (lc < path || *lc != '/')
     {
@@ -49,7 +51,7 @@ char *which(const char *filename)
     {
         return NULL;
     }
-
+    
     p = path = strdup(path);
     while (p) {
         n = strchr(p, ':');
@@ -124,40 +126,32 @@ int cocoasudo(char *executable, char *commandArgs[], char *icon, char *prompt)
         myAuthorizationEnvironment.count = 0;
     }
     
-    if (AuthorizationCreate(NULL, &myAuthorizationEnvironment/*kAuthorizationEmptyEnvironment*/, kAuthorizationFlagDefaults, &authRef) != errAuthorizationSuccess)
+    if (AuthorizationCreate(NULL, &myAuthorizationEnvironment, kAuthorizationFlagDefaults, &authRef) != errAuthorizationSuccess)
     {
         printf("Could not create authorization reference object.\n");
         status = errAuthorizationBadAddress;
     }
     else
     {
-        status = AuthorizationCopyRights(authRef, &rightSet, &myAuthorizationEnvironment/*kAuthorizationEmptyEnvironment*/,
+        status = AuthorizationCopyRights(authRef, &rightSet, &myAuthorizationEnvironment,
                                          kAuthorizationFlagDefaults | kAuthorizationFlagPreAuthorize
                                          | kAuthorizationFlagInteractionAllowed | kAuthorizationFlagExtendRights,
                                          NULL);
     }
-
+    
     if (status == errAuthorizationSuccess)
     {
-        FILE *ioPipe;
+        FILE *ioPipe = NULL;
         char buffer[1024];
         int bytesRead;
-
+        
         status = AuthorizationExecuteWithPrivileges(authRef, executable, 0, commandArgs, &ioPipe);
 
-        /* Just pipe processes' stdout to our stdout for now; hopefully can add stdin pipe later as well */
-        for (;;)
-        {
-            bytesRead = fread(buffer, sizeof(char), 1024, ioPipe);
-            if (bytesRead < 1) break;
-            write(STDOUT_FILENO, buffer, bytesRead * sizeof(char));
-        }
-        
         pid_t pid;
         int pidStatus;
-        do {
-            pid = wait(&pidStatus);
-        } while (pid != -1);
+        pid = wait(&pidStatus);
+        
+        close(fileno(ioPipe));
         
         if (status == errAuthorizationSuccess)
         {
@@ -182,8 +176,65 @@ int cocoasudo(char *executable, char *commandArgs[], char *icon, char *prompt)
 
 
 inline bool file_exists (const std::string& name) {
-  struct stat buffer;
-  return (stat (name.c_str(), &buffer) == 0);
+    struct stat buffer;
+    return (stat (name.c_str(), &buffer) == 0);
+}
+
+void unmountComplete()
+{
+    printf("Unmount complete\n");
+}
+
+void unmountFromMacOS(std::string volumePath)
+{
+    const std::string cmd = "diskutil unmount " + volumePath;
+    system(cmd.c_str());
+}
+
+void demotePermissions(std::string volumePath)
+{
+    std::string cmdStr = "/bin/chmod";
+    char* cmd = const_cast<char*>(cmdStr.c_str());
+    
+    std::string titleStr = "Please approve temporary permission demotion";
+    char* title = const_cast<char*>(titleStr.c_str());
+
+    char* argv[0];
+    std::string arg1Str = "626";
+    std::string arg2Str = volumePath;
+    
+    char* icon = NULL;
+
+    char* commandArgs[3];
+    
+    commandArgs[0] = const_cast<char*>(arg1Str.c_str());
+    commandArgs[1] = const_cast<char*>(arg2Str.c_str());
+    commandArgs[2] = nil;
+    
+    cocoasudo(cmd, commandArgs, icon, title);
+}
+
+void repairPermissions(std::string volumePath)
+{
+    std::string cmdStr = "/bin/chmod";
+    char* cmd = const_cast<char*>(cmdStr.c_str());
+    
+    std::string titleStr = "Please approve permission repair of " + volumePath;
+    char* title = const_cast<char*>(titleStr.c_str());
+
+    char* argv[0];
+    std::string arg1Str = "640";
+    std::string arg2Str = volumePath;
+    
+    char* icon = NULL;
+
+    char* commandArgs[3];
+    
+    commandArgs[0] = const_cast<char*>(arg1Str.c_str());
+    commandArgs[1] = const_cast<char*>(arg2Str.c_str());
+    commandArgs[2] = nil;
+    
+    cocoasudo(cmd, commandArgs, icon, title);
 }
 
 std::fstream VolumeMounter::mount(std::string bsdName)
@@ -211,12 +262,15 @@ std::fstream VolumeMounter::mount(std::string bsdName)
         return {};
     }
     
+    unmountFromMacOS(volumePath);
+    demotePermissions(volumePath);
+    
     printf("Volume path %s exists\n", volumePath.c_str());
     printf("Attempting Akai FAT16 mount...\n");
     
     std::fstream result;
     
-    result.open(volumePath.c_str(), std::ios_base::in);
+    result.open(volumePath.c_str(), std::ios_base::in | std::ios_base::out);
     
     if (!result.is_open()) {
         char* msg = strerror(errno);

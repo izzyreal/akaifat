@@ -23,7 +23,7 @@ public:
         img.seekg (0, std::ios::end);
         const auto end = img.tellg();
         const auto fsize = (end-begin);
-        return fsize;
+        return 128 * 1024 * 1024;
     }
 
     void read(long devOffset, ByteBuffer& dest) override {
