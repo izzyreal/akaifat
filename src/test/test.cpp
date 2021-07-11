@@ -12,6 +12,7 @@
 #include "fat/AkaiFatLfnDirectoryEntry.hpp"
 
 #include "util/RemovableVolumes.h"
+#include "util/VolumeMounter.h"
 
 using namespace akaifat;
 using namespace akaifat::fat;
@@ -45,22 +46,33 @@ void createImage()
 
 TEST_CASE("list removable volumes", "[volumes]")
 {
-    RemovableVolumes rv;
+    RemovableVolumes removableVolumes;
     
     class TestChangeListener : public VolumeChangeListener {
     public:
+        std::vector<std::string> removableVolumeNames;
         void processChange(std::string change) {
             printf("We can do what we want now with: %s\n", change.c_str());
+            removableVolumeNames.emplace_back(change);
         }
     };
     
     TestChangeListener listener;
     
-    rv.addListener(&listener);
+    removableVolumes.addListener(&listener);
     
-    rv.init();
-    
+    removableVolumes.init();
+
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+        
+    for (auto& name : listener.removableVolumeNames)
+    {
+        std::fstream volumeStream = VolumeMounter::mount(name);
+        if (volumeStream.is_open())
+            printf("Volume %s has been mounted\n", name.c_str());
+        else
+            printf("Volume %s has NOT been mounted!\n", name.c_str());
+    }
 }
 
 TEST_CASE("create disk image", "[image]") {

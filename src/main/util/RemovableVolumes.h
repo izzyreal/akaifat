@@ -1,3 +1,5 @@
+#pragma once
+
 #ifdef __APPLE__
 #include <DiskArbitration/DiskArbitration.h>
 #endif
@@ -6,12 +8,11 @@
 #include <string>
 #include <thread>
 
-namespace akaifat {
-namespace util {
+namespace akaifat::util {
 class VolumeChangeListener {
 public:
     VolumeChangeListener() = default;
-    virtual void processChange(std::string change) { printf("Change: %s\n", change.c_str()); }
+    virtual void processChange(std::string change) = 0;
 };
 
 class RemovableVolumes {
@@ -34,5 +35,4 @@ private:
 #endif
     
 };
-}
 }
