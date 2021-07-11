@@ -11,19 +11,26 @@ namespace akaifat {
 class ImageBlockDevice : public BlockDevice {
 private:
     std::fstream& img;
+    long mediaSize = -1;
     
 public:
     explicit ImageBlockDevice(std::fstream& _img) : img (_img) {}
+    explicit ImageBlockDevice(std::fstream& _img, uint64_t _mediaSize) : img (_img), mediaSize (static_cast<long>(_mediaSize)) {}
     
     bool isClosed() override { return false; }
 
     long getSize() override {
+        
+        if (mediaSize != -1) {
+            return mediaSize;
+        }
+        
         img.seekg(0);
         const auto begin = img.tellg();
         img.seekg (0, std::ios::end);
         const auto end = img.tellg();
         const auto fsize = (end-begin);
-        return 128 * 1024 * 1024;
+        return fsize;
     }
 
     void read(long devOffset, ByteBuffer& dest) override {

@@ -20,7 +20,7 @@ void RemovableVolumes::addListener(VolumeChangeListener* l)
 {
     listeners.emplace_back(l);
 }
-
+#include <CoreFoundation/CoreFoundation.h>
 void RemovableVolumes::diskAppeared(DADiskRef disk, void* context)
 {
     CFDictionaryRef properties = DADiskCopyDescription(disk);
@@ -31,13 +31,16 @@ void RemovableVolumes::diskAppeared(DADiskRef disk, void* context)
     if (ejectable.intValue == 1 && volumeMountable.intValue == 1)
     {
         NSString* bsdName = (NSString*) CFDictionaryGetValue(properties, kDADiskDescriptionMediaBSDNameKey);
-        auto str = bsdName.UTF8String;
-        printf("Disk appeared: %s\n", str);
+        CFNumberRef s1 = (CFNumberRef) CFDictionaryGetValue(properties, kDADiskDescriptionMediaSizeKey);
+        int64_t mediaSize;
+        CFNumberGetValue(s1, kCFNumberSInt64Type, &mediaSize);
+        auto bsdNameStr = bsdName.UTF8String;
+        printf("Disk appeared: %s, size: %lld\n", bsdNameStr, mediaSize);
 
         auto that = (RemovableVolumes*)context;
 
         for (auto& l : that->listeners)
-            l->processChange(str);
+            l->processChange(bsdNameStr, mediaSize);
     }
 }
 

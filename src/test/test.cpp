@@ -50,10 +50,10 @@ TEST_CASE("list removable volumes", "[volumes]")
     
     class TestChangeListener : public VolumeChangeListener {
     public:
-        std::vector<std::string> bsdNames;
-        void processChange(std::string change) {
-            printf("We can do what we want now with: %s\n", change.c_str());
-            bsdNames.emplace_back(change);
+        std::vector<std::pair<std::string, int64_t>> bsdNamesAndMediaSizes;
+        void processChange(std::string bsdName, int64_t mediaSize) {
+            printf("We can do what we want now with: %s\n", bsdName.c_str());
+            bsdNamesAndMediaSizes.emplace_back(std::pair<std::string, uint64_t>{bsdName, mediaSize});
         }
     };
     
@@ -65,20 +65,28 @@ TEST_CASE("list removable volumes", "[volumes]")
     
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     
-    for (auto& name : listener.bsdNames)
+    for (auto& nameAndSize : listener.bsdNamesAndMediaSizes)
     {
+        auto name = nameAndSize.first;
+        auto mediaSize = nameAndSize.second;
+        
         std::fstream volumeStream = VolumeMounter::mount(name);
         
         if (volumeStream.is_open()) {
+            
             printf("BSD name %s has been mounted\n", name.c_str());
-            auto device = std::make_shared<ImageBlockDevice>(volumeStream);
+            
+            auto device = std::make_shared<ImageBlockDevice>(volumeStream, mediaSize);
             auto fs = dynamic_cast<AkaiFatFileSystem *>(FileSystemFactory::createAkai(device, true));
             auto root = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(fs->getRoot());
+            
             for (auto& e : root->akaiNameIndex) {
                 printf("Entry: %s\n", e.first.c_str());
             }
+            
             volumeStream.close();
             VolumeMounter::unmount(name);
+            
         }
         else {
             printf("BSD name %s has NOT been mounted!\n", name.c_str());

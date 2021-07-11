@@ -12,7 +12,7 @@ namespace akaifat::util {
 class VolumeChangeListener {
 public:
     VolumeChangeListener() = default;
-    virtual void processChange(std::string change) = 0;
+    virtual void processChange(std::string bsdName, int64_t mediaSize) = 0;
 };
 
 class RemovableVolumes {
