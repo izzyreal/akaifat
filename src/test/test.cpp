@@ -77,6 +77,8 @@ TEST_CASE("list removable volumes", "[volumes]")
             for (auto& e : root->akaiNameIndex) {
                 printf("Entry: %s\n", e.first.c_str());
             }
+            volumeStream.close();
+            VolumeMounter::unmount(name);
         }
         else {
             printf("BSD name %s has NOT been mounted!\n", name.c_str());

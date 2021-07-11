@@ -180,16 +180,18 @@ inline bool file_exists (const std::string& name) {
     return (stat (name.c_str(), &buffer) == 0);
 }
 
-void unmountComplete()
-{
-    printf("Unmount complete\n");
-}
-
 void unmountFromMacOS(std::string volumePath)
 {
     const std::string cmd = "diskutil unmount " + volumePath;
     system(cmd.c_str());
 }
+
+void mountToMacOS(std::string volumePath)
+{
+    const std::string cmd = "diskutil mount " + volumePath;
+    system(cmd.c_str());
+}
+
 
 void demotePermissions(std::string volumePath)
 {
@@ -237,13 +239,14 @@ void repairPermissions(std::string volumePath)
     cocoasudo(cmd, commandArgs, icon, title);
 }
 
-std::fstream VolumeMounter::mount(std::string bsdName)
+bool validateBSDName(std::string bsdName)
 {
     const static unsigned int MIN_BSD_NAME_LENGTH = 5;
+    bool valid = true;
     
     if (bsdName.length() < MIN_BSD_NAME_LENGTH) {
         printf("bsdName length < 5\n");
-        return {};
+        valid = false;
     }
     
     const bool validStart = bsdName.substr(0, 4) == "disk" || bsdName.substr(0, 5) == "rdisk";
@@ -251,7 +254,7 @@ std::fstream VolumeMounter::mount(std::string bsdName)
     if (!validStart)
     {
         printf("%s is an illegal BSD name. bsdName must begin with disk or rdisk\n", bsdName.c_str());
-        return {};
+        valid = false;
     }
     
     const auto volumePath = "/dev/" + bsdName;
@@ -259,9 +262,19 @@ std::fstream VolumeMounter::mount(std::string bsdName)
     if (!file_exists(volumePath.c_str()))
     {
         printf("Volume path %s does not exist\n", volumePath.c_str());
-        return {};
+        valid = false;
     }
     
+    return valid;
+}
+
+std::fstream VolumeMounter::mount(std::string bsdName)
+{
+    if (!validateBSDName(bsdName))
+        return {};
+    
+    const auto volumePath = "/dev/" + bsdName;
+
     unmountFromMacOS(volumePath);
     demotePermissions(volumePath);
     
@@ -280,6 +293,16 @@ std::fstream VolumeMounter::mount(std::string bsdName)
     }
     
     return result;
+}
+
+void VolumeMounter::unmount(std::string bsdName)
+{
+    if (!validateBSDName(bsdName))
+        return;
+    
+    const auto volumePath = "/dev/" + bsdName;
+    mountToMacOS(volumePath);
+    repairPermissions(volumePath);
 }
 
 #endif
