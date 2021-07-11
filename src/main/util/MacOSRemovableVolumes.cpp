@@ -3,8 +3,6 @@
 
 #include <Foundation/Foundation.h>
 
-#include <DiskArbitration/DiskArbitration.h>
-
 using namespace akaifat::util;
 
 RemovableVolumes::~RemovableVolumes()
@@ -19,7 +17,12 @@ RemovableVolumes::~RemovableVolumes()
     changeListenerThread.join();
 }
 
-void diskAppeared(DADiskRef disk, void* context)
+void RemovableVolumes::addListener(VolumeChangeListener* l)
+{
+    listeners.emplace_back(l);
+}
+
+void RemovableVolumes::diskAppeared(DADiskRef disk, void* context)
 {
     CFDictionaryRef properties = DADiskCopyDescription(disk);
     
@@ -31,10 +34,15 @@ void diskAppeared(DADiskRef disk, void* context)
         NSString* bsdName = (NSString*) CFDictionaryGetValue(properties, kDADiskDescriptionMediaBSDNameKey);
         auto str = bsdName.UTF8String;
         printf("Disk appeared: %s\n", str);
+        
+        auto that = (RemovableVolumes*)context;
+        
+        for (auto& l : that->listeners)
+            l->processChange(str);
     }
 }
 
-void diskDisappeared(DADiskRef disk, void* context)
+void RemovableVolumes::diskDisappeared(DADiskRef disk, void* context)
 {
     printf("Bla bla bla\n");
 }
@@ -45,8 +53,8 @@ void RemovableVolumes::init()
     
     changeListenerThread = std::thread([&]{
         DASessionRef session = DASessionCreate(kCFAllocatorDefault);
-        DARegisterDiskAppearedCallback(session, NULL, diskAppeared, NULL);
-        DARegisterDiskDisappearedCallback(session, NULL, diskDisappeared, NULL);
+        DARegisterDiskAppearedCallback(session, NULL, diskAppeared, this);
+        DARegisterDiskDisappearedCallback(session, NULL, diskDisappeared, this);
         DASessionScheduleWithRunLoop(session, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
 
         while (running)

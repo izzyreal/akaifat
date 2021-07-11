@@ -46,7 +46,20 @@ void createImage()
 TEST_CASE("list removable volumes", "[volumes]")
 {
     RemovableVolumes rv;
+    
+    class TestChangeListener : public VolumeChangeListener {
+    public:
+        void processChange(std::string change) {
+            printf("We can do what we want now with: %s\n", change.c_str());
+        }
+    };
+    
+    TestChangeListener listener;
+    
+    rv.addListener(&listener);
+    
     rv.init();
+    
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 }
 
