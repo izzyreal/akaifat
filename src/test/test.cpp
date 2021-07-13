@@ -19,6 +19,7 @@ using namespace akaifat::fat;
 using namespace akaifat::util;
 
 const auto IMAGE_NAME = "tmpakaifat.img";
+const auto IMAGE_SIZE = 16 * 1024 * 1024;
 
 void createImage()
 {
@@ -28,14 +29,14 @@ void createImage()
     img.open(IMAGE_NAME, std::ios_base::out);
     
     char bytes[1] {'\0'};
-    for (int i = 0; i < 16 * 1024 * 1024; i++)
+    for (int i = 0; i < IMAGE_SIZE; i++)
         img.write(bytes, 1);
     
     img.close();
     
     img.open(IMAGE_NAME, std::ios_base::out | std::ios_base::in);
     
-    auto device = std::make_shared<ImageBlockDevice>(img);
+    auto device = std::make_shared<ImageBlockDevice>(img, IMAGE_SIZE);
     
     SuperFloppyFormatter formatter(device);
     formatter.setVolumeLabel("MPC2000XL");
@@ -63,7 +64,7 @@ TEST_CASE("list removable volumes", "[volumes]")
     
     removableVolumes.init();
     
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     
     for (auto& nameAndSize : listener.bsdNamesAndMediaSizes)
     {
@@ -95,8 +96,6 @@ TEST_CASE("list removable volumes", "[volumes]")
     }
 }
 
-/*
-
 TEST_CASE("create disk image", "[image]") {
     bool success = true;
     
@@ -121,7 +120,7 @@ void AkaiFatTestsFixture::init(bool create) {
     
     img.seekg(std::ios::beg);
     
-    device = std::make_shared<ImageBlockDevice>(img);
+    device = std::make_shared<ImageBlockDevice>(img, IMAGE_SIZE);
     fs = dynamic_cast<AkaiFatFileSystem *>(FileSystemFactory::createAkai(device, false));
     
     root = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(fs->getRoot());
@@ -152,13 +151,13 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can read", "[read]") {
 }
 
 
+/*
 TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", "[write]") {
     // BEGIN Add directory
     std::string newDirName = "AAA";
     root->addDirectory(newDirName);
     close();
     // END Add directory
-    
     
     // BEGIN Volume label
     init(false);
@@ -168,7 +167,6 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     
     REQUIRE (volumeLabel == "MPC2000XL");
     // END Volume label
-    
     
     // BEGIN Read new directory
     auto aaaEntry = root->getEntry(newDirName);
@@ -190,17 +188,16 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     
     auto newFile = newFileEntry->getFile();
     
-    const auto FILE_LENGTH = 1024 * 1024;
+    const auto FILE_LENGTH = 512;
     
     newFile->setLength(FILE_LENGTH);
     
     ByteBuffer src(FILE_LENGTH);
     
     for (int i = 0; i < FILE_LENGTH; i++)
-        src.put(i % 256);
+        src.put(' ');
     src.flip();
     newFile->write(0, src);
-    
     close();
     // END Add file
     
@@ -288,10 +285,9 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     
     close();
     init(false);
-    
     REQUIRE (!root->getEntry(newFileName));
     // END Remove file
-    
     // Don't call close() because it will be called by the fixture's destructor
+
 }
-*/
+  */

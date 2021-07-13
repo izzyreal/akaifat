@@ -94,12 +94,12 @@ bool IsRemovable2(char driveLetter)
         PSTORAGE_DEVICE_DESCRIPTOR StorageDeviceDescriptor = (PSTORAGE_DEVICE_DESCRIPTOR)Buffer;
         if (StorageDeviceDescriptor->RemovableMedia)
         {
-            printf("%s IS removable\n", volumePath.c_str());
+            //printf("%s IS removable\n", volumePath.c_str());
             result = true;
         }
         else
         {
-            printf("%s is NOT removable\n", volumePath.c_str());
+            //printf("%s is NOT removable\n", volumePath.c_str());
         }
     }
     CloseHandle(hFile);
@@ -174,18 +174,20 @@ void EnumDisks()
     }
 }
 
-void EnumDisks2()
+void RemovableVolumes::detectChanges()
 {
     auto driveLetters = getDriveLetters();
     
     for (auto driveLetter : driveLetters)
     {
-        printf("Checking %c\n", driveLetter);
+        //printf("Checking %c\n", driveLetter);
         auto removable = IsRemovable2(driveLetter);
 
         if (!removable) continue;
 
-        std::string path = std::string(1, driveLetter) + ":\\";
+        std::string driveLetterStr = std::string(1, driveLetter);
+
+        std::string path = driveLetterStr + ":\\";
         LPCSTR  lpRootPathName = path.c_str();
         DWORD lpSectorsPerCluster = 0;
         DWORD lpBytesPerSector = 0;
@@ -199,16 +201,24 @@ void EnumDisks2()
             &lpNumberOfFreeClusters,
             &lpTotalNumberOfClusters
         )) {
-            printf("Could get %c\n", driveLetter);
+            //printf("Could get %c\n", driveLetter);
             unsigned long sectorsPerCluster = (unsigned long) lpSectorsPerCluster;
             unsigned long bytesPerSector = (unsigned long)lpBytesPerSector;
             unsigned long numberOfFreeClusters = (unsigned long)lpNumberOfFreeClusters;
             unsigned long totalNumberOfClusters = (unsigned long)lpTotalNumberOfClusters;
             
-            printf("secPerClust: %lu, bytPerSec: %lu, freeClust: %lu, totalClust: %lu\n",
-                sectorsPerCluster, bytesPerSector, numberOfFreeClusters, totalNumberOfClusters);
+            //printf("secPerClust: %lu, bytPerSec: %lu, freeClust: %lu, totalClust: %lu\n",
+                //sectorsPerCluster, bytesPerSector, numberOfFreeClusters, totalNumberOfClusters);
 
-            IsRandomAccessible(driveLetter);
+            unsigned long mediaSize = bytesPerSector * sectorsPerCluster * totalNumberOfClusters;
+
+            if (volumes.emplace(std::pair<std::string, unsigned long>{ driveLetterStr, mediaSize }).second)
+            {
+                for (auto& l : listeners)
+                    l->processChange(driveLetterStr, mediaSize);
+            }
+
+            //IsRandomAccessible(driveLetter);
         }
     }
 }
@@ -220,8 +230,8 @@ void RemovableVolumes::init()
     changeListenerThread = std::thread([&]{
         while (running)
         {
-            EnumDisks2();
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            detectChanges();
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
     });
 }

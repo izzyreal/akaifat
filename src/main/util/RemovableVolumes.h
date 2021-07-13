@@ -2,6 +2,8 @@
 
 #ifdef __APPLE__
 #include <DiskArbitration/DiskArbitration.h>
+#elif _WIN32
+#include <set>
 #endif
 
 #include <vector>
@@ -32,6 +34,8 @@ private:
     static void diskAppeared(DADiskRef disk, void* context);
     static void diskDisappeared(DADiskRef disk, void* context);
 #elif _WIN32
+    std::set<std::pair<std::string, unsigned long>> volumes;
+    void detectChanges();
     static void diskAppeared(void* disk, void* context);
     static void diskDisappeared(void* disk, void* context);
 #endif
