@@ -1,6 +1,6 @@
 #pragma once
 
-#include <exception>
+#include <memory>
 #include <string>
 
 namespace akaifat {

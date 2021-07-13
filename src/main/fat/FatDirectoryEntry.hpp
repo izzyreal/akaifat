@@ -9,6 +9,7 @@
 
 #include <utility>
 #include <vector>
+#include <cassert>
 
 using namespace akaifat;
 

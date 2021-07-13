@@ -2,6 +2,7 @@
 
 #include "../util/ByteBuffer.hpp"
 
+#include <memory>
 #include <vector>
 #include <string>
 

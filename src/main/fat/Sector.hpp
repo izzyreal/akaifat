@@ -3,6 +3,7 @@
 #include "../util/ByteBuffer.hpp"
 #include "../BlockDevice.hpp"
 
+#include <memory>
 #include <string>
 
 namespace akaifat::fat {
