@@ -19,7 +19,6 @@ class RemovableVolumes {
 public:
     RemovableVolumes() = default;
     ~RemovableVolumes();
-    static std::vector<std::string> getBSDNames();
     
     void init();
     void addListener(VolumeChangeListener*);
@@ -32,7 +31,10 @@ private:
 #ifdef __APPLE__
     static void diskAppeared(DADiskRef disk, void* context);
     static void diskDisappeared(DADiskRef disk, void* context);
+#elif _WIN32
+    static void diskAppeared(void* disk, void* context);
+    static void diskDisappeared(void* disk, void* context);
 #endif
-    
+
 };
 }

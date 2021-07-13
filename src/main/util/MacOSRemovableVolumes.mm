@@ -1,6 +1,8 @@
 #if defined (__APPLE__)
 #include "RemovableVolumes.h"
+
 #include <Foundation/Foundation.h>
+#include <CoreFoundation/CoreFoundation.h>
 
 using namespace akaifat::util;
 
@@ -20,7 +22,7 @@ void RemovableVolumes::addListener(VolumeChangeListener* l)
 {
     listeners.emplace_back(l);
 }
-#include <CoreFoundation/CoreFoundation.h>
+
 void RemovableVolumes::diskAppeared(DADiskRef disk, void* context)
 {
     CFDictionaryRef properties = DADiskCopyDescription(disk);
@@ -67,10 +69,5 @@ void RemovableVolumes::init()
         
         CFRelease(session);
     });
-}
-
-std::vector<std::string> RemovableVolumes::getBSDNames()
-{
-    return {};
 }
 #endif
