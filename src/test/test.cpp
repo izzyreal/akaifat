@@ -75,27 +75,31 @@ TEST_CASE("list removable volumes", "[volumes]")
         
         if (volumeStream.is_open()) {
             
-            printf("BSD name %s has been mounted\n", name.c_str());
+            printf("Volume %s has been mounted\n", name.c_str());
             
             auto device = std::make_shared<ImageBlockDevice>(volumeStream, mediaSize);
-            auto fs = dynamic_cast<AkaiFatFileSystem *>(FileSystemFactory::createAkai(device, true));
+            auto fs = dynamic_cast<AkaiFatFileSystem *>(FileSystemFactory::createAkai(device, false));
             auto root = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(fs->getRoot());
             
             for (auto& e : root->akaiNameIndex) {
                 printf("Entry: %s\n", e.first.c_str());
             }
             
+            //std::string newDirName = "AAAA";
+            //root->addDirectory(newDirName);
+            //fs->close();
+            
             volumeStream.close();
             VolumeMounter::unmount(name);
             
         }
         else {
-            printf("BSD name %s has NOT been mounted!\n", name.c_str());
+            printf("Volume %s has NOT been mounted!\n", name.c_str());
             continue;
         }
     }
 }
-
+/*
 TEST_CASE("create disk image", "[image]") {
     bool success = true;
     

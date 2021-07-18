@@ -4,6 +4,8 @@
 #include <Windows.h>
 #include <cfgmgr32.h>
 
+#pragma comment(lib, "cfgmgr32.lib")
+
 #define FILE_SHARE_VALID_FLAGS 0x00000007
 
 using namespace akaifat::util;

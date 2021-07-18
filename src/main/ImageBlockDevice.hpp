@@ -56,8 +56,24 @@ public:
         if ((devOffset + toWriteTotal) > getSize()) throw std::runtime_error("writing past end of device");
 
         img.seekp(devOffset);
-        std::vector<char>& buf = src.getBuffer();
         auto toWrite = src.limit() - src.position();
+
+        if (toWrite % 512 != 0)
+        {
+            int padSize = 512 - (toWrite % 512);
+            int firstPos = (devOffset + toWrite + padSize) - 512;
+            ByteBuffer onDisk(512);
+            read(firstPos, onDisk);
+            
+            for (int i = toWrite; i < toWrite + padSize; i++)
+                src.put(i, onDisk.getBuffer()[i % 512]);
+
+            toWrite += padSize;
+        }
+
+        img.seekp(devOffset);
+
+        std::vector<char>& buf = src.getBuffer();
         img.write(&buf[0] + src.position(), toWrite);
         src.position(src.position() + toWrite);
     }
