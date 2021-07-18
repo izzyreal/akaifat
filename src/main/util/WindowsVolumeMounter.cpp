@@ -10,15 +10,6 @@
 
 using namespace akaifat::util;
 
-void unmountFromWindows(std::string volumePath)
-{
-}
-
-void mountToWindows(std::string volumePath)
-{
-}
-
-
 void demotePermissions(std::string driveLetter)
 {
     std::string cmd = "-command \"& {\
@@ -55,8 +46,40 @@ void demotePermissions(std::string driveLetter)
     }
 }
 
-void repairPermissions(std::string volumePath)
+void repairPermissions(std::string driveLetter)
 {
+    std::string cmd = "-command \"& {\
+        $NewAcl = [io.directory]::GetAccessControl('\\\\.\\" + driveLetter + ":');\
+        $identity = 'BUILTIN\\Users';\
+        $fileSystemRights = 'FullControl';\
+        $type = 'Allow';\
+        $fileSystemAccessRuleArgumentList = $identity, $fileSystemRights, $type;\
+        $fileSystemAccessRule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $fileSystemAccessRuleArgumentList;\
+        $NewAcl.AddAccessRule($fileSystemAccessRule);\
+        [io.directory]::RemoveAccessControl('\\\\.\\" + driveLetter + ":',$NewAcl);}\"";
+
+    int nRet = (int)ShellExecute(0,
+        "runas",
+        "powershell",
+        cmd.c_str(),
+        0,
+        SW_HIDE);
+
+    if (nRet <= 32) {
+        DWORD dw = GetLastError();
+        char szMsg[250];
+        FormatMessage(
+            FORMAT_MESSAGE_FROM_SYSTEM,
+            0, dw, 0,
+            szMsg, sizeof(szMsg),
+            NULL
+        );
+        printf("Error while ShellExecute: %s\n", szMsg);
+    }
+    else
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
 }
 
 std::fstream VolumeMounter::mount(std::string driveLetter)
@@ -100,14 +123,9 @@ std::fstream VolumeMounter::mount(std::string driveLetter)
     return result;
 }
 
-void VolumeMounter::unmount(std::string bsdName)
+void VolumeMounter::unmount(std::string driveLetter)
 {
-    //if (!validateBSDName(bsdName))
-      //  return;
-    
-    const auto volumePath = "/dev/" + bsdName;
-    mountToWindows(volumePath);
-    repairPermissions(volumePath);
+    repairPermissions(driveLetter);
 }
 
 #endif
