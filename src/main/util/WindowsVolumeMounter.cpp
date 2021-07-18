@@ -6,6 +6,7 @@
 #include <io.h>
 
 #include <string>
+#include <thread>
 
 using namespace akaifat::util;
 
@@ -47,6 +48,10 @@ void demotePermissions(std::string driveLetter)
             NULL
         );
         printf("Error while ShellExecute: %s\n", szMsg);
+    }
+    else
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 }
 
