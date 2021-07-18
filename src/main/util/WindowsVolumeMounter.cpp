@@ -18,8 +18,21 @@ void mountToWindows(std::string volumePath)
 }
 
 
-void demotePermissions(std::string volumePath)
+void demotePermissions(std::string driveLetter)
 {
+   int nRet = (int)ShellExecute(0, "runas", "powershell", "-command \"& {$NewAcl = [io.directory]::GetAccessControl('\\\\.\\F:'); $identity = 'BUILTIN\\Users'; $fileSystemRights = 'FullControl'; $type = 'Allow'; $fileSystemAccessRuleArgumentList = $identity, $fileSystemRights, $type; $fileSystemAccessRule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $fileSystemAccessRuleArgumentList; $NewAcl.AddAccessRule($fileSystemAccessRule); [io.directory]::SetAccessControl('\\\\.\\F:',$NewAcl);}\"", 0, SW_SHOWNORMAL);
+
+    if (nRet <= 32) {
+        DWORD dw = GetLastError();
+        char szMsg[250];
+        FormatMessage(
+            FORMAT_MESSAGE_FROM_SYSTEM,
+            0, dw, 0,
+            szMsg, sizeof(szMsg),
+            NULL
+        );
+        printf("Error while ShellExecute: %s\n", szMsg);
+    }
 }
 
 void repairPermissions(std::string volumePath)
@@ -27,11 +40,12 @@ void repairPermissions(std::string volumePath)
 }
 
 std::fstream VolumeMounter::mount(std::string driveLetter)
-{    
+{
+    demotePermissions(driveLetter);
+
     std::fstream result;
     char    fn[30];
     snprintf(fn, sizeof fn, "\\\\.\\%s:", driveLetter.c_str());
-
     HANDLE vol_handle = CreateFile(fn, GENERIC_ALL,
         FILE_SHARE_READ, NULL,
         OPEN_EXISTING,
