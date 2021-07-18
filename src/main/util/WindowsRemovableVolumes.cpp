@@ -27,36 +27,6 @@ void RemovableVolumes::addListener(VolumeChangeListener* l)
     listeners.emplace_back(l);
 }
 
-void RemovableVolumes::diskAppeared(void* disk, void* context)
-{
-    /*
-    CFDictionaryRef properties = DADiskCopyDescription(disk);
-
-    auto ejectable = (NSString*)CFDictionaryGetValue(properties, kDADiskDescriptionMediaEjectableKey);
-    auto volumeMountable = (NSString*) CFDictionaryGetValue(properties, kDADiskDescriptionVolumeMountableKey);
-
-    if (ejectable.intValue == 1 && volumeMountable.intValue == 1)
-    {
-        NSString* bsdName = (NSString*) CFDictionaryGetValue(properties, kDADiskDescriptionMediaBSDNameKey);
-        CFNumberRef s1 = (CFNumberRef) CFDictionaryGetValue(properties, kDADiskDescriptionMediaSizeKey);
-        int64_t mediaSize;
-        CFNumberGetValue(s1, kCFNumberSInt64Type, &mediaSize);
-        auto bsdNameStr = bsdName.UTF8String;
-        printf("Disk appeared: %s, size: %lld\n", bsdNameStr, mediaSize);
-
-        auto that = (RemovableVolumes*)context;
-
-        for (auto& l : that->listeners)
-            l->processChange(bsdNameStr, mediaSize);
-    }
-    */
-}
-
-void RemovableVolumes::diskDisappeared(void* disk, void* context)
-{
-    printf("Bla bla bla\n");
-}
-
 std::vector<char> getDriveLetters()
 {
     std::vector<char> result;
@@ -75,7 +45,7 @@ std::vector<char> getDriveLetters()
     return result;
 }
 
-bool IsRemovable2(char driveLetter)
+bool IsRemovable(char driveLetter)
 {
     bool result = false;
     std::string volumePath = "\\\\.\\" + std::string(1, driveLetter) + ":";
@@ -96,84 +66,13 @@ bool IsRemovable2(char driveLetter)
         PSTORAGE_DEVICE_DESCRIPTOR StorageDeviceDescriptor = (PSTORAGE_DEVICE_DESCRIPTOR)Buffer;
         if (StorageDeviceDescriptor->RemovableMedia)
         {
-            //printf("%s IS removable\n", volumePath.c_str());
             result = true;
         }
-        else
-        {
-            //printf("%s is NOT removable\n", volumePath.c_str());
-        }
     }
+
     CloseHandle(hFile);
     hFile = INVALID_HANDLE_VALUE;
     return result;
-}
-
-bool IsRandomAccessible(char driveLetter)
-{
-    std::string volumePath = "\\\\.\\" + std::string(1, driveLetter) + ":";
-
-    HANDLE hFile = CreateFile(volumePath.c_str(), GENERIC_ALL, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_RANDOM_ACCESS, NULL);
-    
-    if (hFile != INVALID_HANDLE_VALUE)
-    {
-        printf("%s IS random-accessible\n", volumePath.c_str());
-        CloseHandle(hFile);
-        hFile = INVALID_HANDLE_VALUE;
-        return true;
-    }
-    else
-    {
-        printf("%s is NOT random-accessible\n", volumePath.c_str());
-        return false;
-    }
-}
-
-ULONG IsRemovable(HANDLE hDisk, BOOLEAN& RemovableMedia, DWORD& Size)
-{
-    STORAGE_PROPERTY_QUERY spq = { StorageDeviceProperty, PropertyStandardQuery };
-
-    STORAGE_DEVICE_DESCRIPTOR sdd;
-
-    ULONG rcb;
-    if (DeviceIoControl(hDisk, IOCTL_STORAGE_QUERY_PROPERTY, &spq, sizeof(spq), &sdd, sizeof(sdd), &rcb, 0))
-    {
-        RemovableMedia = sdd.RemovableMedia;
-        Size = sdd.Size;
-        return NOERROR;
-    }
-
-    return GetLastError();
-}
-
-void EnumDisks()
-{
-    ULONG len;
-
-    if (!CM_Get_Device_Interface_List_SizeW(&len, const_cast<GUID*>(&GUID_DEVINTERFACE_DISK), 0, CM_GET_DEVICE_INTERFACE_LIST_PRESENT))
-    {
-        PWSTR buf = (PWSTR)alloca(len << 1);
-        if (!CM_Get_Device_Interface_ListW(const_cast<GUID*>(&GUID_DEVINTERFACE_DISK), 0, buf, len, CM_GET_DEVICE_INTERFACE_LIST_PRESENT))
-        {
-            while (*buf)
-            {
-                HANDLE hDisk = CreateFileW(buf, 0, FILE_SHARE_VALID_FLAGS, 0, OPEN_EXISTING, 0, 0);
-
-                if (hDisk != INVALID_HANDLE_VALUE)
-                {
-                    BOOLEAN RemovableMedia;
-                    DWORD Size;
-                    if (!IsRemovable(hDisk, RemovableMedia, Size))
-                    {
-                        printf("%u %lu %S\n", Size, RemovableMedia, buf);
-                    }
-
-                    CloseHandle(hDisk);
-                }
-                buf += wcslen(buf) + 1;
-            }
-        }
-    }
 }
 
 void RemovableVolumes::detectChanges()
@@ -182,8 +81,7 @@ void RemovableVolumes::detectChanges()
     
     for (auto driveLetter : driveLetters)
     {
-        //printf("Checking %c\n", driveLetter);
-        auto removable = IsRemovable2(driveLetter);
+        auto removable = IsRemovable(driveLetter);
 
         if (!removable) continue;
 
@@ -203,15 +101,11 @@ void RemovableVolumes::detectChanges()
             &lpNumberOfFreeClusters,
             &lpTotalNumberOfClusters
         )) {
-            //printf("Could get %c\n", driveLetter);
             unsigned long sectorsPerCluster = (unsigned long) lpSectorsPerCluster;
             unsigned long bytesPerSector = (unsigned long)lpBytesPerSector;
             unsigned long numberOfFreeClusters = (unsigned long)lpNumberOfFreeClusters;
             unsigned long totalNumberOfClusters = (unsigned long)lpTotalNumberOfClusters;
             
-            //printf("secPerClust: %lu, bytPerSec: %lu, freeClust: %lu, totalClust: %lu\n",
-                //sectorsPerCluster, bytesPerSector, numberOfFreeClusters, totalNumberOfClusters);
-
             unsigned long mediaSize = bytesPerSector * sectorsPerCluster * totalNumberOfClusters;
 
             if (volumes.emplace(std::pair<std::string, unsigned long>{ driveLetterStr, mediaSize }).second)
@@ -219,8 +113,6 @@ void RemovableVolumes::detectChanges()
                 for (auto& l : listeners)
                     l->processChange(driveLetterStr, mediaSize);
             }
-
-            //IsRandomAccessible(driveLetter);
         }
     }
 }

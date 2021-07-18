@@ -36,8 +36,6 @@ private:
 #elif _WIN32
     std::set<std::pair<std::string, unsigned long>> volumes;
     void detectChanges();
-    static void diskAppeared(void* disk, void* context);
-    static void diskDisappeared(void* disk, void* context);
 #endif
 
 };
