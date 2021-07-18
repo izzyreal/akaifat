@@ -20,7 +20,22 @@ void mountToWindows(std::string volumePath)
 
 void demotePermissions(std::string driveLetter)
 {
-   int nRet = (int)ShellExecute(0, "runas", "powershell", "-command \"& {$NewAcl = [io.directory]::GetAccessControl('\\\\.\\F:'); $identity = 'BUILTIN\\Users'; $fileSystemRights = 'FullControl'; $type = 'Allow'; $fileSystemAccessRuleArgumentList = $identity, $fileSystemRights, $type; $fileSystemAccessRule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $fileSystemAccessRuleArgumentList; $NewAcl.AddAccessRule($fileSystemAccessRule); [io.directory]::SetAccessControl('\\\\.\\F:',$NewAcl);}\"", 0, SW_SHOWNORMAL);
+    std::string cmd = "-command \"& {\
+        $NewAcl = [io.directory]::GetAccessControl('\\\\.\\" + driveLetter + ":');\
+        $identity = 'BUILTIN\\Users';\
+        $fileSystemRights = 'FullControl';\
+        $type = 'Allow';\
+        $fileSystemAccessRuleArgumentList = $identity, $fileSystemRights, $type;\
+        $fileSystemAccessRule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $fileSystemAccessRuleArgumentList;\
+        $NewAcl.AddAccessRule($fileSystemAccessRule);\
+        [io.directory]::SetAccessControl('\\\\.\\" + driveLetter + ":',$NewAcl);}\"";
+
+   int nRet = (int)ShellExecute(0,
+       "runas",
+       "powershell",
+       cmd.c_str(),
+       0,
+       SW_HIDE);
 
     if (nRet <= 32) {
         DWORD dw = GetLastError();
