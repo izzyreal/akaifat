@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <climits>
 
 namespace akaifat::fat {
     class LittleEndian {
