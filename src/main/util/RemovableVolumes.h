@@ -20,10 +20,24 @@ public:
 class RemovableVolumes {
 public:
     RemovableVolumes() = default;
-    ~RemovableVolumes();
-    
+    ~RemovableVolumes()
+    {
+        running = false;
+
+        while (!changeListenerThread.joinable())
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+
+        changeListenerThread.join();
+    }
+
+    void addListener(VolumeChangeListener* l)
+    {
+        listeners.emplace_back(l);
+    }
+
     void init();
-    void addListener(VolumeChangeListener*);
     
 private:
     bool running = false;

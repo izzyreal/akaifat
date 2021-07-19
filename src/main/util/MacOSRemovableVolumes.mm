@@ -6,23 +6,6 @@
 
 using namespace akaifat::util;
 
-RemovableVolumes::~RemovableVolumes()
-{
-    running = false;
-    
-    while (!changeListenerThread.joinable())
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
-    
-    changeListenerThread.join();
-}
-
-void RemovableVolumes::addListener(VolumeChangeListener* l)
-{
-    listeners.emplace_back(l);
-}
-
 void RemovableVolumes::diskAppeared(DADiskRef disk, void* context)
 {
     CFDictionaryRef properties = DADiskCopyDescription(disk);
