@@ -71,35 +71,3 @@ endforeach()
 
 add_executable(akaifat-tests ${_source_list_test})
 target_link_libraries(akaifat-tests akaifat)
-
-
-# Configure Windows raw access service
-
-set(_src_root_path_raw_access_svc "${CMAKE_CURRENT_SOURCE_DIR}/win_raw_access_service")
-
-file(
-    GLOB_RECURSE _source_list_win_raw_access_svc 
-    LIST_DIRECTORIES false
-    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-    "${_src_root_path_raw_access_svc}/RawAccessSvc.cpp"
-)
-
-add_executable(raw-access-service ${_source_list_win_raw_access_svc})
-
-file(
-    GLOB_RECURSE _source_list_win_raw_access_svc_config 
-    LIST_DIRECTORIES false
-    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-    "${_src_root_path_raw_access_svc}/RawAccessSvcConfig.cpp"
-)
-
-add_executable(raw-access-service-config ${_source_list_win_raw_access_svc_config})
-
-file(
-    GLOB_RECURSE _source_list_win_raw_access_svc_control 
-    LIST_DIRECTORIES false
-    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-    "${_src_root_path_raw_access_svc}/RawAccessSvcControl.cpp"
-)
-
-add_executable(raw-access-service-control ${_source_list_win_raw_access_svc_control})
