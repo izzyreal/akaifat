@@ -4,6 +4,8 @@
 #include <DiskArbitration/DiskArbitration.h>
 #elif _WIN32
 #include <set>
+#elif __linux__
+#include <pthread.h>
 #endif
 
 #include <vector>
@@ -38,17 +40,19 @@ public:
     }
 
     void init();
-    
+
 private:
     bool running = false;
     std::thread changeListenerThread;
     std::vector<VolumeChangeListener*> listeners;
-    
+
 #ifdef __APPLE__
     static void diskAppeared(DADiskRef disk, void* context);
     static void diskDisappeared(DADiskRef disk, void* context);
 #elif _WIN32
     std::set<std::pair<std::string, unsigned long>> volumes;
+    void detectChanges();
+#elif __linux__
     void detectChanges();
 #endif
 

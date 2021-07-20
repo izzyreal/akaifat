@@ -30,7 +30,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(MACOSX TRUE)
 endif()
 
-
 if (MACOSX)
     file(
         GLOB_RECURSE _source_list_main 
@@ -87,4 +86,11 @@ foreach(_source IN ITEMS ${_source_list_test})
 endforeach()
 
 add_executable(akaifat-tests ${_source_list_test})
-target_link_libraries(akaifat-tests akaifat)
+
+if (UNIX)
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+    find_package(Threads REQUIRED)
+    target_link_libraries(akaifat-tests Threads::Threads akaifat)
+else()
+    target_link_libraries(akaifat-tests akaifat)
+endif (UNIX)
