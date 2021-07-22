@@ -6,6 +6,7 @@
 #include <set>
 #elif __linux__
 #include <pthread.h>
+#include <udisks/udisks.h>
 #endif
 
 #include <vector>
@@ -51,8 +52,6 @@ private:
     static void diskDisappeared(DADiskRef disk, void* context);
 #elif _WIN32
     std::set<std::pair<std::string, unsigned long>> volumes;
-    void detectChanges();
-#elif __linux__
     void detectChanges();
 #endif
 
