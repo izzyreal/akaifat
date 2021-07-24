@@ -19,6 +19,43 @@ bool IsRemovable(char driveLetter)
     return false;
 }
 
+std::string exec(const char* cmd) {
+    char buffer[128];
+    std::string result = "";
+    FILE* pipe = popen(cmd, "r");
+
+    if (!pipe) return "";
+
+    try {
+        while (fgets(buffer, sizeof buffer, pipe) != NULL)
+            result += buffer;
+    } catch (const std::exception&) {
+        pclose(pipe);
+        throw;
+    }
+    pclose(pipe);
+    return result;
+}
+
+uint64_t get_media_size(std::string bsdName)
+{
+    int64_t mediaSize = 0;
+
+    std::string cmd = "lsblk -b --output SIZE -n -d " + bsdName;
+
+    auto mediaSizeStr = exec(cmd.c_str());
+
+    try {
+        mediaSize = std::stoi(mediaSizeStr);
+    } catch (const std::exception&) {
+        // nothing to do
+    }
+
+    printf("Reported media size: %i\n", mediaSize);
+
+    return mediaSize;
+}
+
 void RemovableVolumes::on_object_added(GDBusObjectManager *manager,
                             GDBusObject *dbus_object, gpointer user_data) {
     UDisksObject *object = NULL;
@@ -37,21 +74,16 @@ void RemovableVolumes::on_object_added(GDBusObjectManager *manager,
     object = UDISKS_OBJECT(dbus_object);
 
     block = udisks_object_peek_block(object);
-    if (block == NULL) {
-        //fprintf(stderr, "Not a block object\n");
-        return;
-    }
+
+    if (block == NULL) return;
 
     filesystem = udisks_object_peek_filesystem(object);
-    if (filesystem == NULL) {
-        //fprintf(stderr, "Not a mountable filesystem\n");
-        return;
-    }
+
+    if (filesystem == NULL) return;
 
     GVariantBuilder builder;
     g_variant_builder_init(&builder, G_VARIANT_TYPE_VARDICT);
-    g_variant_builder_add(&builder, "{sv}", "auth.no_user_interaction",
-                          g_variant_new_boolean(TRUE));
+    g_variant_builder_add(&builder, "{sv}", "auth.no_user_interaction", g_variant_new_boolean(TRUE));
 
     GVariant *options = g_variant_builder_end (&builder);
     g_variant_ref_sink (options);
@@ -59,38 +91,33 @@ void RemovableVolumes::on_object_added(GDBusObjectManager *manager,
     gchar *mount_path = NULL;
     GError *error = NULL;
 
+    auto bsdName = "/dev/" + std::string(path).substr(strlen(BLOCK_PATH));
+
+    bool is_raw_accessible = false;
+
     if (!udisks_filesystem_call_mount_sync(
                 filesystem, options, &mount_path, NULL, &error)) {
-        //fprintf(stderr, "Error mounting: %s\n", error->message);
         g_error_free(error);
     } else {
-        //fprintf(stderr, "Mounting device at: %s\n", mount_path);
+        printf("Able to mount\n");
+        is_raw_accessible = true;
 
         if (!udisks_filesystem_call_unmount_sync(
                 filesystem, options, NULL, &error)) {
-            //fprintf(stderr, "Error unmounting: %s\n", error->message);
+            fprintf(stderr, "Error unmounting: %s\n", error->message);
             g_error_free(error);
         } else {
-            //fprintf(stderr, "Unmounted device at: %s\n", mount_path);
-            auto bsdName = "/dev/" + std::string(path).substr(strlen(BLOCK_PATH));
-
-            int file_descriptor = open(bsdName.c_str(), O_RDONLY);
-
-            int64_t mediaSize;
-
-            ioctl(file_descriptor, BLKGETSIZE64, &mediaSize);
-
-            printf("Reported media size: %ul\n", mediaSize);
-
-            for (auto& l : that->listeners)
-                l->processChange(bsdName, mediaSize);
-
-            close(file_descriptor);
+            is_raw_accessible = true;
         }
 
         g_free(mount_path);
     }
     g_variant_unref(options);
+
+    if (!is_raw_accessible) return;
+
+            for (auto& l : that->listeners)
+                l->processChange(bsdName, get_media_size(bsdName));
 }
 
 void RemovableVolumes::init()

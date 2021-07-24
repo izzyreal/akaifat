@@ -80,7 +80,7 @@ TEST_CASE("list removable volumes", "[volumes]")
             printf("Volume %s has been mounted\n", name.c_str());
 
             auto device = std::make_shared<ImageBlockDevice>(volumeStream, mediaSize);
-            auto fs = dynamic_cast<AkaiFatFileSystem *>(FileSystemFactory::createAkai(device, false));
+            auto fs = dynamic_cast<AkaiFatFileSystem *>(FileSystemFactory::createAkai(device, true));
             auto root = std::dynamic_pointer_cast<AkaiFatLfnDirectory>(fs->getRoot());
 
             for (auto& e : root->akaiNameIndex) {

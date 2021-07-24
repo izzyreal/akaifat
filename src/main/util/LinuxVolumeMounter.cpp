@@ -14,6 +14,7 @@ void demotePermissions(std::string driveLetter)
 
 void repairPermissions(std::string driveLetter)
 {
+    // set it back to 660
 }
 
 std::fstream VolumeMounter::mount(std::string bsdName, bool readOnly)
@@ -26,7 +27,9 @@ std::fstream VolumeMounter::mount(std::string bsdName, bool readOnly)
 
     if (err == 0)
     {
-        result.open(bsdName.c_str(), std::ios_base::in | std::ios_base::out);
+        auto flags = readOnly ? (std::ios_base::in) : (std::ios_base::in | std::ios_base::out);
+
+        result.open(bsdName.c_str(), flags);
 
         if (!result.is_open()) {
             char* msg = strerror(errno);
