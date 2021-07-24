@@ -151,7 +151,8 @@ int cocoasudo(char *executable, char *commandArgs[], char *icon, char *prompt)
         int pidStatus;
         pid = wait(&pidStatus);
         
-        close(fileno(ioPipe));
+        if (ioPipe != NULL)
+            close(fileno(ioPipe));
         
         if (status == errAuthorizationSuccess)
         {

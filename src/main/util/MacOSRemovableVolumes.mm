@@ -15,17 +15,49 @@ void RemovableVolumes::diskAppeared(DADiskRef disk, void* context)
 
     if (ejectable.intValue == 1 && volumeMountable.intValue == 1)
     {
+        NSString* volumeType = (NSString*) CFDictionaryGetValue(properties, kDADiskDescriptionVolumeTypeKey);
+        auto volumeTypeStr = volumeType.UTF8String;
+        printf("Volume type: %s\n", volumeTypeStr);
+        bool isFat16 = strcmp(volumeTypeStr, "MSDOS (FAT16)");
+        
+        if (!isFat16) return;
+        
         NSString* bsdName = (NSString*) CFDictionaryGetValue(properties, kDADiskDescriptionMediaBSDNameKey);
-        CFNumberRef s1 = (CFNumberRef) CFDictionaryGetValue(properties, kDADiskDescriptionMediaSizeKey);
-        int64_t mediaSize;
-        CFNumberGetValue(s1, kCFNumberSInt64Type, &mediaSize);
+        CFNumberRef mediaSizeRef = (CFNumberRef) CFDictionaryGetValue(properties, kDADiskDescriptionMediaSizeKey);
+        uint64_t mediaSize;
+        CFNumberGetValue(mediaSizeRef, kCFNumberSInt64Type, &mediaSize);
+        
         auto bsdNameStr = bsdName.UTF8String;
         printf("Disk appeared: %s, size: %lld\n", bsdNameStr, mediaSize);
+        NSLog(@"Gone: %@", properties);
 
         auto that = (RemovableVolumes*)context;
 
+        std::string volumeUUID;
+        
+        CFUUIDRef volumeUUIDKey = (CFUUIDRef) CFDictionaryGetValue(properties, kDADiskDescriptionVolumeUUIDKey);
+        if(volumeUUIDKey)
+        {
+            CFStringRef uuid = CFUUIDCreateString(NULL, volumeUUIDKey);
+            if(uuid==nullptr)
+            {
+                //DBG("WARNING: failed to convert UUID to CFString");
+            } else {
+                char tmp[256];
+
+                if(!CFStringGetCString(uuid, tmp, sizeof(tmp), kCFStringEncodingUTF8)) {
+                    //DBG("WARNING: failed to convert CFString to UTF8: " << __FILE__ << ":" << __LINE__);
+                }
+                volumeUUID = tmp;
+                CFRelease(uuid);
+            }
+        }
+        
+        NSString* volumeName = (NSString*) CFDictionaryGetValue(properties, kDADiskDescriptionVolumeNameKey);
+        std::string volumeNameStr = volumeName.UTF8String;
+        
         for (auto& l : that->listeners)
-            l->processChange(bsdNameStr, mediaSize);
+            l->processChange(RemovableVolume{volumeUUID, bsdNameStr, volumeNameStr, mediaSize});
     }
 }
 

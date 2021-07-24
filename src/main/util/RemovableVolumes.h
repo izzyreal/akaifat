@@ -14,10 +14,17 @@
 #include <thread>
 
 namespace akaifat::util {
+struct RemovableVolume {
+    std::string volumeUUID;
+    std::string deviceName;
+    std::string volumeName;
+    uint64_t mediaSize;
+};
+
 class VolumeChangeListener {
 public:
     VolumeChangeListener() = default;
-    virtual void processChange(std::string bsdName, int64_t mediaSize) = 0;
+    virtual void processChange(RemovableVolume) = 0;
 };
 
 class RemovableVolumes {

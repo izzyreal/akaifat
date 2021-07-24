@@ -51,10 +51,10 @@ TEST_CASE("list removable volumes", "[volumes]")
 
     class TestChangeListener : public VolumeChangeListener {
     public:
-        std::vector<std::pair<std::string, int64_t>> bsdNamesAndMediaSizes;
-        void processChange(std::string bsdName, int64_t mediaSize) {
-            printf("We can do what we want now with: %s\n", bsdName.c_str());
-            bsdNamesAndMediaSizes.emplace_back(std::pair<std::string, uint64_t>{bsdName, mediaSize});
+        std::vector<RemovableVolume> volumes;
+        void processChange(RemovableVolume v) override {
+            printf("We can do what we want now with: %s\n", v.deviceName.c_str());
+            volumes.emplace_back(v);
         }
     };
 
@@ -66,10 +66,10 @@ TEST_CASE("list removable volumes", "[volumes]")
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-    for (auto& nameAndSize : listener.bsdNamesAndMediaSizes)
+    for (auto& v : listener.volumes)
     {
-        auto name = nameAndSize.first;
-        auto mediaSize = nameAndSize.second;
+        auto name = v.deviceName;
+        auto mediaSize = v.mediaSize;
 
         std::fstream volumeStream;
 
@@ -77,7 +77,7 @@ TEST_CASE("list removable volumes", "[volumes]")
 
         if (volumeStream.is_open()) {
 
-            printf("Volume %s has been mounted\n", name.c_str());
+            printf("Volume %s with UUID %s has been mounted\n", name.c_str(), v.volumeUUID.c_str());
 
             auto device = std::make_shared<ImageBlockDevice>(volumeStream, mediaSize);
             auto fs = dynamic_cast<AkaiFatFileSystem *>(FileSystemFactory::createAkai(device, true));
