@@ -1,6 +1,10 @@
 #if defined (__linux__)
 #include "RemovableVolumes.h"
 
+#include <linux/fs.h>
+#include <sys/ioctl.h>
+#include <fcntl.h>
+
 using namespace akaifat::util;
 
 static const char *BLOCK_PATH = "/org/freedesktop/UDisks2/block_devices/";
@@ -23,15 +27,10 @@ void RemovableVolumes::on_object_added(GDBusObjectManager *manager,
     RemovableVolumes* that = (RemovableVolumes*) user_data;
 
     const char *path = g_dbus_object_get_object_path(dbus_object);
-    fprintf(stderr, "New object: %s: ", path);
-
-    // Example object path: /org/freedesktop/UDisks2/block_devices/sdb1
-    // strip BLOCK_PATH away and prepend /dev/
-    // chmod 626
-    // go
+    //fprintf(stderr, "New object: %s: ", path);
 
     if (strncmp(path, BLOCK_PATH, strlen(BLOCK_PATH)) != 0) {
-        fprintf(stderr, "Not a block device\n");
+        //fprintf(stderr, "Not a block device\n");
         return;
     }
 
@@ -39,13 +38,13 @@ void RemovableVolumes::on_object_added(GDBusObjectManager *manager,
 
     block = udisks_object_peek_block(object);
     if (block == NULL) {
-        fprintf(stderr, "Not a block object\n");
+        //fprintf(stderr, "Not a block object\n");
         return;
     }
 
     filesystem = udisks_object_peek_filesystem(object);
     if (filesystem == NULL) {
-        fprintf(stderr, "Not a mountable filesystem\n");
+        //fprintf(stderr, "Not a mountable filesystem\n");
         return;
     }
 
@@ -62,36 +61,36 @@ void RemovableVolumes::on_object_added(GDBusObjectManager *manager,
 
     if (!udisks_filesystem_call_mount_sync(
                 filesystem, options, &mount_path, NULL, &error)) {
-        fprintf(stderr, "Error mounting: %s\n", error->message);
+        //fprintf(stderr, "Error mounting: %s\n", error->message);
         g_error_free(error);
     } else {
-        fprintf(stderr, "Mounting device at: %s\n", mount_path);
+        //fprintf(stderr, "Mounting device at: %s\n", mount_path);
 
         if (!udisks_filesystem_call_unmount_sync(
                 filesystem, options, NULL, &error)) {
-            fprintf(stderr, "Error unmounting: %s\n", error->message);
+            //fprintf(stderr, "Error unmounting: %s\n", error->message);
             g_error_free(error);
         } else {
-            fprintf(stderr, "Unmounted device at: %s\n", mount_path);
-                    auto bsdName = "/dev/" + std::string(path).substr(strlen(BLOCK_PATH));
+            //fprintf(stderr, "Unmounted device at: %s\n", mount_path);
+            auto bsdName = "/dev/" + std::string(path).substr(strlen(BLOCK_PATH));
 
-            printf("============= made up bsdName: %s\n", bsdName.c_str());
+            int file_descriptor = open(bsdName.c_str(), O_RDONLY);
 
-            printf("\n\n========== listeners size: %ul\n", that->listeners.size());
+            int64_t mediaSize;
+
+            ioctl(file_descriptor, BLKGETSIZE64, &mediaSize);
+
+            printf("Reported media size: %ul\n", mediaSize);
 
             for (auto& l : that->listeners)
-                l->processChange(bsdName, 123 * 1024 * 1024);
+                l->processChange(bsdName, mediaSize);
+
+            close(file_descriptor);
         }
 
         g_free(mount_path);
     }
     g_variant_unref(options);
-}
-
-static void on_interface_added(GDBusObjectManager *manager,
-                               GDBusObject *dbus_object,
-                               GDBusInterface *interface, gpointer user_data) {
-    //on_object_added(manager, dbus_object, user_data);
 }
 
 void RemovableVolumes::init()
@@ -126,7 +125,6 @@ void RemovableVolumes::init()
         g_list_free_full (objects, g_object_unref);
 
         g_signal_connect(manager, "object-added", G_CALLBACK(on_object_added), this);
-        g_signal_connect(manager, "interface-added", G_CALLBACK(on_interface_added), NULL);
 
         while (running)
         {

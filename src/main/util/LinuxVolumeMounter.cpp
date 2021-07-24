@@ -20,12 +20,9 @@ std::fstream VolumeMounter::mount(std::string bsdName, bool readOnly)
 {
     std::fstream result;
 
-    printf("\n\n=========VolumeMounter mount bsdName: %s\n", bsdName.c_str());
-
     std::string cmd = "sudo chmod 626 " + bsdName;
 
     int err = system(cmd.c_str());
-    printf("\n\n===============Err: %i\n", err);
 
     if (err == 0)
     {
