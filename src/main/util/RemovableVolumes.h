@@ -58,7 +58,7 @@ private:
     static void diskAppeared(DADiskRef disk, void* context);
     static void diskDisappeared(DADiskRef disk, void* context);
 #elif _WIN32
-    std::set<std::pair<std::string, unsigned long>> volumes;
+    std::set<std::string> volumes;
     void detectChanges();
 #elif __linux__
     static void on_object_added(GDBusObjectManager *manager,

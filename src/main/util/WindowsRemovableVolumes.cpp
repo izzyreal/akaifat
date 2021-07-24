@@ -71,13 +71,15 @@ void RemovableVolumes::detectChanges()
         std::string driveLetterStr = std::string(1, driveLetter);
 
         std::string path = driveLetterStr + ":\\";
-        LPCSTR  lpRootPathName = path.c_str();
+        LPCSTR lpRootPathName = path.c_str();
         DWORD lpSectorsPerCluster = 0;
         DWORD lpBytesPerSector = 0;
         DWORD lpNumberOfFreeClusters = 0;
         DWORD lpTotalNumberOfClusters = 0;
         
-        if (GetDiskFreeSpaceA(
+        unsigned long mediaSize = 0;
+
+        if (GetDiskFreeSpace(
             lpRootPathName,
             &lpSectorsPerCluster,
             &lpBytesPerSector,
@@ -89,13 +91,45 @@ void RemovableVolumes::detectChanges()
             unsigned long numberOfFreeClusters = (unsigned long)lpNumberOfFreeClusters;
             unsigned long totalNumberOfClusters = (unsigned long)lpTotalNumberOfClusters;
             
-            unsigned long mediaSize = bytesPerSector * sectorsPerCluster * totalNumberOfClusters;
+            mediaSize = bytesPerSector * sectorsPerCluster * totalNumberOfClusters;
+        }
 
-            if (volumes.emplace(std::pair<std::string, unsigned long>{ driveLetterStr, mediaSize }).second)
-            {
-                for (auto& l : listeners)
-                    l->processChange(driveLetterStr, mediaSize);
-            }
+        if (mediaSize == 0) continue;
+
+        char volumeName[11];
+        std::string volumeNameStr;
+
+        if (GetVolumeInformation(
+            lpRootPathName,
+            (LPTSTR)volumeName,
+            11,
+            (LPDWORD)0,
+            (LPDWORD)0,
+            (LPDWORD)0,
+            (LPTSTR)0,
+            0))
+        {
+           volumeNameStr = volumeName;
+        }
+
+        char volumeGUID[50];
+        std::string volumeGUIDStr;
+        
+        if (GetVolumeNameForVolumeMountPoint(
+            lpRootPathName,
+            (LPSTR)volumeGUID,
+            50)
+        )
+        {
+            volumeGUIDStr = volumeGUID;
+        }
+
+        printf("Got volumeName %s and volumeGUID %s\n", volumeNameStr.c_str(), volumeGUIDStr.c_str());
+
+        if (volumes.emplace(volumeGUID).second)
+        {
+            for (auto& l : listeners)
+                l->processChange(RemovableVolume{ volumeGUID, driveLetterStr, volumeName, mediaSize });
         }
     }
 }

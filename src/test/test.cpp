@@ -148,6 +148,7 @@ AkaiFatTestsFixture::~AkaiFatTestsFixture() {
 
 int AkaiFatTestsFixture::uniqueID = 0;
 
+/*
 TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can read", "[read]") {
     auto bs = std::dynamic_pointer_cast<Fat16BootSector>(fs->getBootSector());
 
@@ -294,3 +295,4 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     // Don't call close() because it will be called by the fixture's destructor
 
 }
+*/
