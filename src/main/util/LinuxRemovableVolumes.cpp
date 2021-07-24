@@ -15,11 +15,12 @@ bool IsRemovable(char driveLetter)
     return false;
 }
 
-static void on_object_added(GDBusObjectManager *manager,
+void RemovableVolumes::on_object_added(GDBusObjectManager *manager,
                             GDBusObject *dbus_object, gpointer user_data) {
     UDisksObject *object = NULL;
     UDisksBlock *block = NULL;
     UDisksFilesystem *filesystem = NULL;
+    RemovableVolumes* that = (RemovableVolumes*) user_data;
 
     const char *path = g_dbus_object_get_object_path(dbus_object);
     fprintf(stderr, "New object: %s: ", path);
@@ -58,6 +59,7 @@ static void on_object_added(GDBusObjectManager *manager,
 
     gchar *mount_path = NULL;
     GError *error = NULL;
+
     if (!udisks_filesystem_call_mount_sync(
                 filesystem, options, &mount_path, NULL, &error)) {
         fprintf(stderr, "Error mounting: %s\n", error->message);
@@ -65,9 +67,21 @@ static void on_object_added(GDBusObjectManager *manager,
     } else {
         fprintf(stderr, "Mounting device at: %s\n", mount_path);
 
-#ifdef HAVE_LIBNOTIFY
-        send_notification(mount_path);
-#endif
+        if (!udisks_filesystem_call_unmount_sync(
+                filesystem, options, NULL, &error)) {
+            fprintf(stderr, "Error unmounting: %s\n", error->message);
+            g_error_free(error);
+        } else {
+            fprintf(stderr, "Unmounted device at: %s\n", mount_path);
+                    auto bsdName = "/dev/" + std::string(path).substr(strlen(BLOCK_PATH));
+
+            printf("============= made up bsdName: %s\n", bsdName.c_str());
+
+            printf("\n\n========== listeners size: %ul\n", that->listeners.size());
+
+            for (auto& l : that->listeners)
+                l->processChange(bsdName, 123 * 1024 * 1024);
+        }
 
         g_free(mount_path);
     }
@@ -77,7 +91,7 @@ static void on_object_added(GDBusObjectManager *manager,
 static void on_interface_added(GDBusObjectManager *manager,
                                GDBusObject *dbus_object,
                                GDBusInterface *interface, gpointer user_data) {
-    on_object_added(manager, dbus_object, user_data);
+    //on_object_added(manager, dbus_object, user_data);
 }
 
 void RemovableVolumes::init()
@@ -106,12 +120,12 @@ void RemovableVolumes::init()
 
             if (!obj) continue;
 
-            on_object_added(manager, obj, NULL);
+            on_object_added(manager, obj, this);
         }
 
         g_list_free_full (objects, g_object_unref);
 
-        g_signal_connect(manager, "object-added", G_CALLBACK(on_object_added), NULL);
+        g_signal_connect(manager, "object-added", G_CALLBACK(on_object_added), this);
         g_signal_connect(manager, "interface-added", G_CALLBACK(on_interface_added), NULL);
 
         while (running)

@@ -53,6 +53,10 @@ private:
 #elif _WIN32
     std::set<std::pair<std::string, unsigned long>> volumes;
     void detectChanges();
+#elif __linux__
+    static void on_object_added(GDBusObjectManager *manager,
+                            GDBusObject *dbus_object, gpointer user_data);
+
 #endif
 
 };
