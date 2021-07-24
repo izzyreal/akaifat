@@ -82,14 +82,15 @@ void repairPermissions(std::string driveLetter)
     }
 }
 
-std::fstream VolumeMounter::mount(std::string driveLetter)
+std::fstream VolumeMounter::mount(std::string driveLetter, bool readOnly)
 {
     demotePermissions(driveLetter);
 
     std::fstream result;
     char    fn[30];
     snprintf(fn, sizeof fn, "\\\\.\\%s:", driveLetter.c_str());
-    HANDLE vol_handle = CreateFile(fn, GENERIC_ALL,
+    
+    HANDLE vol_handle = CreateFile(fn, (readOnly ? GENERIC_READ : GENERIC_ALL),
         FILE_SHARE_READ, NULL,
         OPEN_EXISTING,
         FILE_FLAG_NO_BUFFERING | FILE_FLAG_RANDOM_ACCESS,
