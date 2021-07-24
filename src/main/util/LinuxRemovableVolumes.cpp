@@ -37,11 +37,53 @@ std::string exec(const char* cmd) {
     return result;
 }
 
+std::string get_filesystem_type(std::string bsdName)
+{
+    std::string result;
+
+    std::string cmd = "lsblk -b -o fsver -n -d " + bsdName;
+
+    result = exec(cmd.c_str());
+    result.pop_back();
+
+    printf("Reported filesystem type: %s\n", result.c_str());
+
+    return result;
+}
+
+std::string get_volume_uuid(std::string bsdName)
+{
+    std::string result;
+
+    std::string cmd = "lsblk -b -o uuid -n -d " + bsdName;
+
+    result = exec(cmd.c_str());
+    result.pop_back();
+
+    printf("Reported UUID: %s\n", result.c_str());
+
+    return result;
+}
+
+std::string get_volume_label(std::string bsdName)
+{
+    std::string result;
+
+    std::string cmd = "lsblk -b -o label -n -d " + bsdName;
+
+    result = exec(cmd.c_str());
+    result.pop_back();
+
+    printf("Reported label: %s\n", result.c_str());
+
+    return result;
+}
+
 uint64_t get_media_size(std::string bsdName)
 {
     int64_t mediaSize = 0;
 
-    std::string cmd = "lsblk -b --output SIZE -n -d " + bsdName;
+    std::string cmd = "lsblk -b -o SIZE -n -d " + bsdName;
 
     auto mediaSizeStr = exec(cmd.c_str());
 
@@ -99,9 +141,6 @@ void RemovableVolumes::on_object_added(GDBusObjectManager *manager,
                 filesystem, options, &mount_path, NULL, &error)) {
         g_error_free(error);
     } else {
-        printf("Able to mount\n");
-        is_raw_accessible = true;
-
         if (!udisks_filesystem_call_unmount_sync(
                 filesystem, options, NULL, &error)) {
             fprintf(stderr, "Error unmounting: %s\n", error->message);
@@ -116,8 +155,16 @@ void RemovableVolumes::on_object_added(GDBusObjectManager *manager,
 
     if (!is_raw_accessible) return;
 
-            for (auto& l : that->listeners)
-                l->processChange(bsdName, get_media_size(bsdName));
+    std::string filesystemType = get_filesystem_type(bsdName);
+
+    if (filesystemType != "FAT16") return;
+
+    std::string volumeName = get_volume_label(bsdName);
+    std::string volumeUUID = get_volume_uuid(bsdName);
+    uint64_t mediaSize = get_media_size(bsdName);
+
+    for (auto& l : that->listeners)
+        l->processChange(RemovableVolume{volumeUUID, bsdName, volumeName, mediaSize});
 }
 
 void RemovableVolumes::init()
