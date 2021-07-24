@@ -8,22 +8,23 @@
 
 using namespace akaifat::util;
 
-void demotePermissions(std::string driveLetter)
+int demotePermissions(std::string bsdName)
 {
+    std::string cmd = "pkexec chmod 626 " + bsdName;
+    return system(cmd.c_str());
 }
 
-void repairPermissions(std::string driveLetter)
+int repairPermissions(std::string bsdName)
 {
-    // set it back to 660
+    std::string cmd = "pkexec chmod 660 " + bsdName;
+    return system(cmd.c_str());
 }
 
 std::fstream VolumeMounter::mount(std::string bsdName, bool readOnly)
 {
     std::fstream result;
 
-    std::string cmd = "sudo chmod 626 " + bsdName;
-
-    int err = system(cmd.c_str());
+    int err = demotePermissions(bsdName);
 
     if (err == 0)
     {
@@ -42,9 +43,9 @@ std::fstream VolumeMounter::mount(std::string bsdName, bool readOnly)
     return result;
 }
 
-void VolumeMounter::unmount(std::string driveLetter)
+void VolumeMounter::unmount(std::string bsdName)
 {
-    repairPermissions(driveLetter);
+    repairPermissions(bsdName);
 }
 
 #endif

@@ -87,7 +87,7 @@ TEST_CASE("list removable volumes", "[volumes]")
                 printf("Entry: %s\n", e.first.c_str());
             }
 
-            //std::string newDirName = "AAAA";
+            //std::string newDirName = "BBBB";
             //root->addDirectory(newDirName);
             //fs->close();
 
@@ -101,7 +101,7 @@ TEST_CASE("list removable volumes", "[volumes]")
         }
     }
 }
-/*
+
 TEST_CASE("create disk image", "[image]") {
     bool success = true;
 
@@ -156,8 +156,6 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can read", "[read]") {
     REQUIRE(volumeLabel == "MPC2000XL");
 }
 
-
-/*
 TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", "[write]") {
     // BEGIN Add directory
     std::string newDirName = "AAA";
@@ -296,4 +294,3 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     // Don't call close() because it will be called by the fixture's destructor
 
 }
-  */
