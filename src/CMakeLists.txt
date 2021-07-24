@@ -65,10 +65,14 @@ endforeach()
 add_library(akaifat ${_source_list_main})
 conan_target_link_libraries(akaifat)
 
-if (UNIX)
+if (UNIX AND NOT APPLE)
     include(FindPkgConfig)
     pkg_search_module(udisks2 REQUIRED udisks2)
     target_include_directories(akaifat SYSTEM PUBLIC ${udisks2_INCLUDE_DIRS})
+endif()
+
+if (APPLE)
+    target_link_libraries(akaifat stdc++ "-framework Foundation -framework Security -framework DiskArbitration")
 endif()
 
 ## Configure test suite application ##
@@ -94,10 +98,10 @@ endforeach()
 
 add_executable(akaifat-tests ${_source_list_test})
 
-if (UNIX)
+if (UNIX AND NOT APPLE)
     set(THREADS_PREFER_PTHREAD_FLAG ON)
     find_package(Threads REQUIRED)
     target_link_libraries(akaifat-tests Threads::Threads ${udisks2_LIBRARIES} akaifat)
 else()
     target_link_libraries(akaifat-tests akaifat)
-endif (UNIX)
+endif()

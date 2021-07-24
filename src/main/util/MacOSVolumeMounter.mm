@@ -268,7 +268,7 @@ bool validateBSDName(std::string bsdName)
     return valid;
 }
 
-std::fstream VolumeMounter::mount(std::string bsdName)
+std::fstream VolumeMounter::mount(std::string bsdName, bool readOnly)
 {
     if (!validateBSDName(bsdName))
         return {};
@@ -283,7 +283,7 @@ std::fstream VolumeMounter::mount(std::string bsdName)
     
     std::fstream result;
     
-    result.open(volumePath.c_str(), std::ios_base::in | std::ios_base::out);
+    result.open(volumePath.c_str(), (readOnly ? (std::ios_base::in) : (std::ios_base::in | std::ios_base::out)));
     
     if (!result.is_open()) {
         char* msg = strerror(errno);
