@@ -99,6 +99,8 @@ void RemovableVolumes::detectChanges()
         char volumeName[11];
         std::string volumeNameStr;
 
+        char fileSystemName[8];
+
         if (GetVolumeInformation(
             lpRootPathName,
             (LPTSTR)volumeName,
@@ -106,10 +108,11 @@ void RemovableVolumes::detectChanges()
             (LPDWORD)0,
             (LPDWORD)0,
             (LPDWORD)0,
-            (LPTSTR)0,
-            0))
+            (LPTSTR)fileSystemName,
+            8))
         {
-           volumeNameStr = volumeName;
+            if (strcmp(fileSystemName, "FAT") != 0) continue;
+            volumeNameStr = volumeName;
         }
 
         char volumeGUID[50];
@@ -123,8 +126,6 @@ void RemovableVolumes::detectChanges()
         {
             volumeGUIDStr = volumeGUID;
         }
-
-        printf("Got volumeName %s and volumeGUID %s\n", volumeNameStr.c_str(), volumeGUIDStr.c_str());
 
         if (volumes.emplace(volumeGUID).second)
         {
