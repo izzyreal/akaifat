@@ -8,6 +8,7 @@
 #include "AkaiFatLfnDirectoryEntry.hpp"
 
 #include <utility>
+
 #include "FatDirectoryEntry.hpp"
 #include "FatFile.hpp"
 #include "AkaiPart.hpp"
@@ -141,7 +142,7 @@ namespace akaifat::fat {
         std::shared_ptr<FsFile> getFile() override {
             return parent->getFile(realEntry);
         }
-
+        
         std::shared_ptr<akaifat::FsDirectory> getDirectory() override {
             return parent->getDirectory(realEntry);
         }

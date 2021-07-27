@@ -9,7 +9,6 @@ using namespace akaifat;
 
 AkaiFatLfnDirectory::AkaiFatLfnDirectory(std::shared_ptr<AbstractDirectory> _dir, std::shared_ptr<Fat> _fat, bool readOnly)
         : AbstractFsObject(readOnly), dir(std::move(_dir)), fat(std::move(_fat)) {
-//    parseLfn();
 }
 
 bool AkaiFatLfnDirectory::isDirReadOnly() {

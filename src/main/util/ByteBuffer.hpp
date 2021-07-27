@@ -15,6 +15,8 @@ public:
     : buf (std::vector<char>(size)), limit_ (size) {}
     ByteBuffer(std::vector<char>& data) : buf (data), limit_ (data.size()) {}
 
+    void clearAndAllocate(long newSize) { buf.clear(); pos = 0; limit_ = 0; buf.resize(newSize); }
+    
     void flip() { limit_ = pos; pos = 0; }
     
     void get(std::vector<char>& dest) {
