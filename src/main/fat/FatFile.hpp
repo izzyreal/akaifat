@@ -17,12 +17,13 @@ class FatFile : public akaifat::AbstractFsObject, public akaifat::FsFile {
 private:
     std::shared_ptr<FatDirectoryEntry> entry;
     ClusterChain chain;
-    std::streambuf* obuf;
-    
+    std::streambuf* ibuf = nullptr;
+    std::streambuf* obuf = nullptr;
+
 public:
+    ~FatFile() { if (obuf != nullptr) delete obuf; if (ibuf != nullptr) delete ibuf; }
     FatFile(const std::shared_ptr<FatDirectoryEntry>& myEntry, ClusterChain _chain)
-    : akaifat::AbstractFsObject(myEntry->isReadOnly()), entry(myEntry), chain(std::move(_chain)) {
-    }
+    : akaifat::AbstractFsObject(myEntry->isReadOnly()), entry(myEntry), chain(std::move(_chain)) {}
     
     static std::shared_ptr<FatFile> get(Fat *fat, const std::shared_ptr<FatDirectoryEntry>& entry) {
         
@@ -110,11 +111,36 @@ public:
                 return n;
             }
         };
-
-        obuf = new akai_streambuf(this);
-        return std::make_unique<std::istream>(obuf);
+        
+        if (ibuf == nullptr)
+            ibuf = new akai_streambuf(this);
+        
+        return std::make_unique<std::istream>(ibuf);
     }
     
-
+    std::unique_ptr<std::ostream> getOutputStream() {
+        class akai_streambuf : public std::streambuf
+        {
+        private:
+            FatFile* fatFile;
+            ByteBuffer bb = ByteBuffer(0);
+        public:
+            akai_streambuf(FatFile* _fatFile) : fatFile (_fatFile) {}
+        protected:
+            std::streamsize xsputn (const char* s, std::streamsize n) override
+            {
+                if (bb.capacity() != n) bb.clearAndAllocate(n);
+                auto& buf = bb.getBuffer();
+                for (int i=0;i<n;i++) buf[i]=s[i];
+                fatFile->write(n, bb);
+                return n;
+            }
+        };
+        
+        if (obuf == nullptr)
+            obuf = new akai_streambuf(this);
+        
+        return std::make_unique<std::ostream>(ibuf);
+    }
 };
 }
