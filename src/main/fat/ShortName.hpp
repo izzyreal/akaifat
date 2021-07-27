@@ -72,11 +72,11 @@ namespace akaifat::fat {
             std::string ext;
 
             if (i == std::string::npos) {
-                name = StrUtil::to_upper_copy(nameExt);
+                name = AkaiStrUtil::to_upper_copy(nameExt);
                 ext = "";
             } else {
-                name = StrUtil::to_upper_copy(nameExt.substr(0, i));
-                ext = StrUtil::to_upper_copy(nameExt.substr(i + 1));
+                name = AkaiStrUtil::to_upper_copy(nameExt.substr(0, i));
+                ext = AkaiStrUtil::to_upper_copy(nameExt.substr(i + 1));
             }
 
             nameBytes = toCharArray(name, ext);
@@ -127,8 +127,8 @@ namespace akaifat::fat {
             for (int i = 0; i < 3; i++)
                 ext.push_back((char) LittleEndian::getUInt8(data, 0x08 + i));
 
-            StrUtil::trim(name, " ");
-            StrUtil::trim(ext, " ");
+            AkaiStrUtil::trim(name, " ");
+            AkaiStrUtil::trim(ext, " ");
 
             return ShortName(name, ext);
         }
@@ -159,8 +159,8 @@ namespace akaifat::fat {
                 ext.push_back(c);
             }
 
-            name = StrUtil::trim(name);
-            ext = StrUtil::trim(ext);
+            name = AkaiStrUtil::trim(name);
+            ext = AkaiStrUtil::trim(ext);
 
             return ext.length() == 0 ? name : (name + "." + ext);
         }

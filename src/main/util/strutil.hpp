@@ -4,7 +4,7 @@
 
 namespace akaifat {
 
-    class StrUtil {
+    class AkaiStrUtil {
     public:
         static inline std::string trim_copy(std::string s, const char *t = " \t\n\r\f\v") {
             return trim(s, t);

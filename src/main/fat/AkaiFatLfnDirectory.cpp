@@ -57,12 +57,12 @@ std::shared_ptr<FsDirectoryEntry> AkaiFatLfnDirectory::addFile(std::string &name
     checkWritable();
     checkUniqueName(name);
 
-    StrUtil::trim(name);
+    AkaiStrUtil::trim(name);
 
     auto entry = std::make_shared<AkaiFatLfnDirectoryEntry>(name, shared_from_this(), false);
 
     dir->addEntry(entry->realEntry);
-    auto nameLower = StrUtil::to_lower_copy(name);
+    auto nameLower = AkaiStrUtil::to_lower_copy(name);
     akaiNameIndex[nameLower] = entry;
 
     getFile(entry->realEntry);
@@ -71,7 +71,7 @@ std::shared_ptr<FsDirectoryEntry> AkaiFatLfnDirectory::addFile(std::string &name
 }
 
 bool AkaiFatLfnDirectory::isFreeName(std::string &name) {
-    return usedAkaiNames.find(StrUtil::to_lower_copy(name)) == usedAkaiNames.end();
+    return usedAkaiNames.find(AkaiStrUtil::to_lower_copy(name)) == usedAkaiNames.end();
 }
 
 
@@ -89,7 +89,7 @@ std::vector<std::string> AkaiFatLfnDirectory::splitName(std::string &s) {
 std::shared_ptr<FsDirectoryEntry> AkaiFatLfnDirectory::addDirectory(std::string &_name) {
     checkWritable();
     checkUniqueName(_name);
-    auto name = StrUtil::trim(_name);
+    auto name = AkaiStrUtil::trim(_name);
     auto real = dir->createSub(fat.get());
     ShortName sn(name);
     real->setAkaiName(name);
@@ -104,7 +104,7 @@ std::shared_ptr<FsDirectoryEntry> AkaiFatLfnDirectory::addDirectory(std::string 
         throw ex;
     }
 
-    akaiNameIndex[StrUtil::to_lower_copy(name)] = e;
+    akaiNameIndex[AkaiStrUtil::to_lower_copy(name)] = e;
 
     getDirectory(real);
 
@@ -115,8 +115,8 @@ std::shared_ptr<FsDirectoryEntry> AkaiFatLfnDirectory::addDirectory(std::string 
 std::shared_ptr<FsDirectoryEntry> AkaiFatLfnDirectory::getEntry(std::string &name) {
     if (akaiNameIndex.find(name) != akaiNameIndex.end()) return akaiNameIndex[name];
     
-    if (akaiNameIndex.find(StrUtil::to_lower_copy(name)) != akaiNameIndex.end())
-        return akaiNameIndex[StrUtil::to_lower_copy(name)];
+    if (akaiNameIndex.find(AkaiStrUtil::to_lower_copy(name)) != akaiNameIndex.end())
+        return akaiNameIndex[AkaiStrUtil::to_lower_copy(name)];
     
     return {};
 }
@@ -134,7 +134,7 @@ void AkaiFatLfnDirectory::flush() {
     dir->flush();
 }
 
-void AkaiFatLfnDirectory::remove(std::string &name) {
+void AkaiFatLfnDirectory::remove(std::string name) {
     checkWritable();
 
     auto entry = getEntry(name);
@@ -157,7 +157,7 @@ std::shared_ptr<AkaiFatLfnDirectoryEntry>
 AkaiFatLfnDirectory::unlinkEntry(std::string &entryName, bool isFile, std::shared_ptr<FatDirectoryEntry> realEntry) {
     if (entryName.length() == 0 || entryName[0] == '.') return {};
 
-    std::string lowerName = StrUtil::to_lower_copy(entryName);
+    std::string lowerName = AkaiStrUtil::to_lower_copy(entryName);
 
     assert(akaiNameIndex[lowerName]);
 
@@ -181,12 +181,12 @@ void AkaiFatLfnDirectory::linkEntry(const std::shared_ptr<AkaiFatLfnDirectoryEnt
     auto name = entry->getName();
     checkUniqueName(name);
     entry->realEntry->setAkaiName(name);
-    akaiNameIndex[StrUtil::to_lower_copy(name)] = entry;
+    akaiNameIndex[AkaiStrUtil::to_lower_copy(name)] = entry;
     updateLFN();
 }
 
 void AkaiFatLfnDirectory::checkUniqueName(std::string &name) {
-    std::string lowerName = StrUtil::to_lower_copy(name);
+    std::string lowerName = AkaiStrUtil::to_lower_copy(name);
     
     if (!usedAkaiNames.emplace(lowerName).second) {
         throw std::runtime_error("an entry named " + name + " already exists");
@@ -225,7 +225,7 @@ void AkaiFatLfnDirectory::parseLfn() {
         if (!current->realEntry->isDeleted() && current->isValid()) {
             auto name = current->getName();
             checkUniqueName(name);
-            auto nameLower = StrUtil::to_lower_copy(name);
+            auto nameLower = AkaiStrUtil::to_lower_copy(name);
             usedAkaiNames.emplace(nameLower);
             akaiNameIndex[nameLower] = current;
         }

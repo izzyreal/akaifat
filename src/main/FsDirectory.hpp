@@ -18,7 +18,7 @@ public:
 
     virtual std::shared_ptr<FsDirectoryEntry> addDirectory(std::string& name) = 0;
 
-    virtual void remove(std::string& name) = 0;
+    virtual void remove(std::string name) = 0;
 
     virtual void flush() = 0;
 

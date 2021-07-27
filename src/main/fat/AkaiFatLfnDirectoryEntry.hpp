@@ -39,9 +39,9 @@ namespace akaifat::fat {
         static std::shared_ptr<AkaiFatLfnDirectoryEntry> extract(std::shared_ptr<AkaiFatLfnDirectory> dir, int offset, int len) {
             auto realEntry = dir->dir->getEntry(offset + len - 1);
             std::string shortName = realEntry->getShortName().asSimpleString();
-            std::string akaiPart = StrUtil::trim_copy(AkaiPart::parse(realEntry->data).asSimpleString());
-            std::string part1 = StrUtil::trim_copy(AkaiFatLfnDirectory::splitName(shortName)[0]);
-            std::string ext = StrUtil::trim_copy(AkaiFatLfnDirectory::splitName(shortName)[1]);
+            std::string akaiPart = AkaiStrUtil::trim_copy(AkaiPart::parse(realEntry->data).asSimpleString());
+            std::string part1 = AkaiStrUtil::trim_copy(AkaiFatLfnDirectory::splitName(shortName)[0]);
+            std::string ext = AkaiStrUtil::trim_copy(AkaiFatLfnDirectory::splitName(shortName)[1]);
 
             if (ext.length() > 0) ext = "." + ext;
 

@@ -44,7 +44,7 @@ namespace akaifat::fat {
 
         void flush() override;
 
-        void remove(std::string &name) override;
+        void remove(std::string name) override;
 
         std::shared_ptr<AkaiFatLfnDirectoryEntry>
         unlinkEntry(std::string &entryName, bool isFile, std::shared_ptr<FatDirectoryEntry> realEntry);
