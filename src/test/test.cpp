@@ -71,9 +71,7 @@ TEST_CASE("list removable volumes", "[volumes]")
         auto name = v.deviceName;
         auto mediaSize = v.mediaSize;
 
-        std::fstream volumeStream;
-
-        volumeStream = VolumeMounter::mount(name, true);
+        std::fstream volumeStream = VolumeMounter::mount(name, true);
 
         if (volumeStream.is_open()) {
 
