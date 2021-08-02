@@ -72,7 +72,7 @@ if (UNIX AND NOT APPLE)
 endif()
 
 if (APPLE)
-    target_link_libraries(akaifat stdc++ "-framework Foundation -framework Security -framework DiskArbitration")
+    target_link_libraries(akaifat stdc++ "-framework Foundation -framework Security -framework DiskArbitration -framework SystemConfiguration")
 endif()
 
 ## Configure test suite application ##

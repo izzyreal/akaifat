@@ -3,12 +3,14 @@
 #include "VolumeMounter.h"
 
 #include <sys/stat.h>
+#include <pwd.h>
 #include <unistd.h>
 
 #include <Foundation/Foundation.h>
 
 #include <Security/Authorization.h>
 #include <Security/AuthorizationTags.h>
+#include <SystemConfiguration/SystemConfiguration.h>
 
 #include <string>
 
@@ -75,7 +77,7 @@ char *which(const char *filename)
     return NULL;
 }
 
-int cocoasudo(char *executable, char *commandArgs[], char *icon, char *prompt)
+int cocoasudo(char *executable, char *commandArgs[], char *prompt)
 {
     int retVal = 1;
     
@@ -89,42 +91,12 @@ int cocoasudo(char *executable, char *commandArgs[], char *icon, char *prompt)
     AuthorizationItem kAuthEnv[2];
     myAuthorizationEnvironment.items = kAuthEnv;
     
-    if (prompt && icon)
-    {
-        kAuthEnv[0].name = kAuthorizationEnvironmentPrompt;
-        kAuthEnv[0].valueLength = strlen(prompt);
-        kAuthEnv[0].value = prompt;
-        kAuthEnv[0].flags = 0;
-        
-        kAuthEnv[1].name = kAuthorizationEnvironmentIcon;
-        kAuthEnv[1].valueLength = strlen(icon);
-        kAuthEnv[1].value = icon;
-        kAuthEnv[1].flags = 0;
-        
-        myAuthorizationEnvironment.count = 2;
-    }
-    else if (prompt)
-    {
-        kAuthEnv[0].name = kAuthorizationEnvironmentPrompt;
-        kAuthEnv[0].valueLength = strlen(prompt);
-        kAuthEnv[0].value = prompt;
-        kAuthEnv[0].flags = 0;
-        
-        myAuthorizationEnvironment.count = 1;
-    }
-    else if (icon)
-    {
-        kAuthEnv[0].name = kAuthorizationEnvironmentIcon;
-        kAuthEnv[0].valueLength = strlen(icon);
-        kAuthEnv[0].value = icon;
-        kAuthEnv[0].flags = 0;
-        
-        myAuthorizationEnvironment.count = 1;
-    }
-    else
-    {
-        myAuthorizationEnvironment.count = 0;
-    }
+    kAuthEnv[0].name = kAuthorizationEnvironmentPrompt;
+    kAuthEnv[0].valueLength = strlen(prompt);
+    kAuthEnv[0].value = prompt;
+    kAuthEnv[0].flags = 0;
+    
+    myAuthorizationEnvironment.count = 1;
     
     if (AuthorizationCreate(NULL, &myAuthorizationEnvironment, kAuthorizationFlagDefaults, &authRef) != errAuthorizationSuccess)
     {
@@ -193,51 +165,70 @@ void mountToMacOS(std::string volumePath)
     system(cmd.c_str());
 }
 
+std::string getCurrentDesktopUser()
+{
+    SCDynamicStoreRef store;
+    CFStringRef name;
+    uid_t uid;
+    size_t BUFLEN = 256;
+    char buf[BUFLEN];
+    Boolean ok;
+
+    store = SCDynamicStoreCreate(NULL, CFSTR("GetConsoleUser"), NULL, NULL);
+    assert(store != NULL);
+    name = SCDynamicStoreCopyConsoleUser(store, &uid, NULL);
+    CFRelease(store);
+
+    if (name != NULL) {
+        ok = CFStringGetCString(name, buf, BUFLEN, kCFStringEncodingUTF8);
+        assert(ok == true);
+        CFRelease(name);
+    } else {
+        strcpy(buf, "<none>");
+    }
+
+    printf("%d %s\n", uid, buf);
+    return std::string(buf);
+}
 
 void demotePermissions(std::string volumePath)
 {
+    struct stat info;
+    stat(volumePath.c_str(), &info);
+    struct passwd *pw = getpwuid(info.st_uid);
+    auto currentOwnerUserName = pw->pw_name;
+    auto currentUser = getCurrentDesktopUser();
+    
+    if (currentOwnerUserName == currentUser) {
+        std::string cmdStr = "/bin/chmod 626 " + volumePath;
+        system(cmdStr.c_str());
+        return;
+    }
+    
     std::string cmdStr = "/bin/chmod";
     char* cmd = const_cast<char*>(cmdStr.c_str());
     
-    std::string titleStr = "Please approve temporary permission demotion";
+    std::string titleStr = "Please approve temporary raw read/write permissions for " + volumePath + ".\nThe owner of this path will also temporarily change to the current user instead of root.\n\nAfter reinserting the medium the owner will be root again.\nThe permissions will be automatically reset to read-only when the application shuts down.";
+    
     char* title = const_cast<char*>(titleStr.c_str());
 
     char* argv[0];
     std::string arg1Str = "626";
     std::string arg2Str = volumePath;
     
-    char* icon = NULL;
-
     char* commandArgs[3];
     
     commandArgs[0] = const_cast<char*>(arg1Str.c_str());
     commandArgs[1] = const_cast<char*>(arg2Str.c_str());
     commandArgs[2] = nil;
     
-    cocoasudo(cmd, commandArgs, icon, title);
+    cocoasudo(cmd, commandArgs, title);
 }
 
 void repairPermissions(std::string volumePath)
 {
-    std::string cmdStr = "/bin/chmod";
-    char* cmd = const_cast<char*>(cmdStr.c_str());
-    
-    std::string titleStr = "Please approve permission repair of " + volumePath;
-    char* title = const_cast<char*>(titleStr.c_str());
-
-    char* argv[0];
-    std::string arg1Str = "640";
-    std::string arg2Str = volumePath;
-    
-    char* icon = NULL;
-
-    char* commandArgs[3];
-    
-    commandArgs[0] = const_cast<char*>(arg1Str.c_str());
-    commandArgs[1] = const_cast<char*>(arg2Str.c_str());
-    commandArgs[2] = nil;
-    
-    cocoasudo(cmd, commandArgs, icon, title);
+    std::string cmdStr = "/bin/chmod 640 " + volumePath;
+    system(cmdStr.c_str());
 }
 
 bool validateBSDName(std::string bsdName)
