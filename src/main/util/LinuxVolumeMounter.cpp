@@ -5,18 +5,42 @@
 #include <string>
 #include <thread>
 #include <cstring>
+#include <unistd.h>
+#include <pwd.h>
+#include <sys/stat.h>
 
 using namespace akaifat::util;
 
+std::string getCurrentUser()
+{
+    uid_t uid = geteuid();
+    struct passwd *pw = getpwuid(uid);
+    if (pw) return std::string(pw->pw_name);
+    return "";
+}
+
 int demotePermissions(std::string bsdName)
 {
-    std::string cmd = "pkexec chmod 626 " + bsdName;
+    std::string currentUser = getCurrentUser();
+
+    struct stat info;
+    stat(bsdName.c_str(), &info);
+    struct passwd *pw = getpwuid(info.st_uid);
+    char* currentOwnerUserName = pw->pw_name;
+
+    if (currentOwnerUserName != currentUser)
+    {
+        std::string cmd = "pkexec chown " + currentUser + " " + bsdName;
+        system(cmd.c_str());
+    }
+
+    std::string cmd = "chmod 626 " + bsdName;
     return system(cmd.c_str());
 }
 
 int repairPermissions(std::string bsdName)
 {
-    std::string cmd = "pkexec chmod 660 " + bsdName;
+    std::string cmd = "chmod 660 " + bsdName;
     return system(cmd.c_str());
 }
 

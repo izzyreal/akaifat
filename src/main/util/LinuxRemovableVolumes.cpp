@@ -81,19 +81,19 @@ std::string get_volume_label(std::string bsdName)
 
 uint64_t get_media_size(std::string bsdName)
 {
-    int64_t mediaSize = 0;
+    uint64_t mediaSize = 0;
 
     std::string cmd = "lsblk -b -o SIZE -n -d " + bsdName;
 
     auto mediaSizeStr = exec(cmd.c_str());
 
     try {
-        mediaSize = std::stoi(mediaSizeStr);
+        mediaSize = std::stoull(mediaSizeStr);
     } catch (const std::exception&) {
         // nothing to do
     }
 
-    printf("Reported media size: %i\n", mediaSize);
+    printf("Reported media size: %ul\n", mediaSize);
 
     return mediaSize;
 }
