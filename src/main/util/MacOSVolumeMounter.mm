@@ -196,16 +196,16 @@ void demotePermissions(std::string volumePath)
     struct stat info;
     stat(volumePath.c_str(), &info);
     struct passwd *pw = getpwuid(info.st_uid);
-    auto currentOwnerUserName = pw->pw_name;
-    auto currentUser = getCurrentDesktopUser();
+    char* currentOwnerUserName = pw->pw_name;
+    std::string currentUser = getCurrentDesktopUser();
     
     if (currentOwnerUserName == currentUser) {
         std::string cmdStr = "/bin/chmod 626 " + volumePath;
         system(cmdStr.c_str());
         return;
     }
-    
-    std::string cmdStr = "/bin/chmod";
+        
+    std::string cmdStr = "/usr/sbin/chown";
     char* cmd = const_cast<char*>(cmdStr.c_str());
     
     std::string titleStr = "Please approve temporary raw read/write permissions for " + volumePath + ".\nThe owner of this path will also temporarily change to the current user instead of root.\n\nAfter reinserting the medium the owner will be root again.\nThe permissions will be automatically reset to read-only when the application shuts down.";
@@ -213,7 +213,7 @@ void demotePermissions(std::string volumePath)
     char* title = const_cast<char*>(titleStr.c_str());
 
     char* argv[0];
-    std::string arg1Str = "626";
+    std::string arg1Str = currentUser;
     std::string arg2Str = volumePath;
     
     char* commandArgs[3];
@@ -223,6 +223,9 @@ void demotePermissions(std::string volumePath)
     commandArgs[2] = nil;
     
     cocoasudo(cmd, commandArgs, title);
+    
+    std::string cmdStr2 = "/bin/chmod 626 " + volumePath;
+    system(cmdStr2.c_str());
 }
 
 void repairPermissions(std::string volumePath)
