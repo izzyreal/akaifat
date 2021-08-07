@@ -293,8 +293,8 @@ void VolumeMounter::unmount(std::string bsdName)
         return;
     
     const auto volumePath = "/dev/" + bsdName;
-    mountToMacOS(volumePath);
     repairPermissions(volumePath);
+    mountToMacOS(volumePath);
 }
 
 #endif

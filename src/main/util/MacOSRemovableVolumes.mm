@@ -18,7 +18,7 @@ void RemovableVolumes::diskAppeared(DADiskRef disk, void* context)
         NSString* volumeType = (NSString*) CFDictionaryGetValue(properties, kDADiskDescriptionVolumeTypeKey);
         auto volumeTypeStr = volumeType.UTF8String;
         printf("Volume type: %s\n", volumeTypeStr);
-        bool isFat16 = strcmp(volumeTypeStr, "MSDOS (FAT16)");
+        bool isFat16 = strcmp(volumeTypeStr, "MS-DOS (FAT16)") == 0;
         
         if (!isFat16) return;
         

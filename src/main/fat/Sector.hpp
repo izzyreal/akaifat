@@ -34,7 +34,7 @@ protected:
         return buffer.getInt(offset);
     }
     
-    char get8(int offset) {
+    unsigned char get8(int offset) {
         return buffer.get(offset) & 0xff;
     }
     
