@@ -100,10 +100,20 @@ public:
         private:
             FatFile* fatFile;
             ByteBuffer bb = ByteBuffer(0);
-            size_t pos = 0;
+            std::streampos pos = 0;
         public:
             akai_streambuf(FatFile* _fatFile) : fatFile (_fatFile) {}
         protected:
+            std::streampos seekoff(std::streamoff off, std::ios_base::seekdir way, std::ios_base::openmode = std::ios_base::in) override
+            {
+                if (way == std::ios_base::beg)
+                    pos = off;
+                else if (way == std::ios_base::cur)
+                    pos += off;
+                else if (way == std::ios_base::end)
+                    pos = fatFile->getLength() + off;
+                return pos;
+            }
             std::streamsize xsgetn (char* s, std::streamsize n) override
             {
                 bb.clearAndAllocate(n);
