@@ -93,29 +93,34 @@ public:
         return chain;
     }
     
-    std::unique_ptr<std::istream> getInputStream() {
+    std::shared_ptr<std::istream> getInputStream() {
+        
         class akai_streambuf : public std::streambuf
         {
         private:
             FatFile* fatFile;
             ByteBuffer bb = ByteBuffer(0);
+            size_t pos = 0;
         public:
             akai_streambuf(FatFile* _fatFile) : fatFile (_fatFile) {}
         protected:
             std::streamsize xsgetn (char* s, std::streamsize n) override
             {
-                if (bb.capacity() != n) bb.clearAndAllocate(n);
-                fatFile->read(n, bb);
+                bb.clearAndAllocate(n);
+                fatFile->read(pos, bb);
                 auto& buf = bb.getBuffer();
                 for (int i=0;i<n;i++) s[i]=buf[i];
+                pos += n;
                 return n;
             }
         };
         
-        if (ibuf == nullptr)
-            ibuf = new akai_streambuf(this);
+        if (ibuf != nullptr)
+            delete ibuf;
         
-        return std::make_unique<std::istream>(ibuf);
+        ibuf = new akai_streambuf(this);
+        
+        return std::make_shared<std::istream>(ibuf);
     }
     
     std::unique_ptr<std::ostream> getOutputStream() {
