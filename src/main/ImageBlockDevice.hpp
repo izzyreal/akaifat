@@ -41,6 +41,38 @@ public:
         if ((devOffset + toReadTotal) > getSize())
             throw std::runtime_error("reading past end of device");
         
+        if (devOffset % 512 != 0)
+        {
+            auto offsetWithinSector = devOffset % 512;
+            auto sectorOffset = devOffset - offsetWithinSector;
+            img.seekg(sectorOffset);
+            auto toReadWithStartAlignment = offsetWithinSector + toReadTotal;
+
+            if (toReadWithStartAlignment % 512 != 0)
+            {
+                auto toReadWithEndAlignment = toReadWithStartAlignment + (512 - (toReadWithStartAlignment % 512));
+                if ((sectorOffset + toReadWithEndAlignment) > getSize())
+                    throw std::runtime_error("reading past end of device");
+
+                ByteBuffer bb(toReadWithEndAlignment);
+                std::vector<char>& buf = bb.getBuffer();
+                img.read(&buf[0], toReadWithEndAlignment);
+                bb.flip();
+                for (int i = offsetWithinSector; i < toReadWithStartAlignment; i++)
+                    dest.put(buf[i]);
+            }
+            else
+            {
+                ByteBuffer bb(toReadWithStartAlignment);
+                std::vector<char>& buf = bb.getBuffer();
+                img.read(&buf[0], toReadWithStartAlignment);
+                bb.flip();
+                for (int i = offsetWithinSector; i < toReadWithStartAlignment; i++)
+                    dest.put(buf[i]);
+            }
+            return;
+        }
+
         img.seekg(devOffset);
         std::vector<char>& buf = dest.getBuffer();
 

@@ -99,7 +99,6 @@ public:
         {
         private:
             FatFile* fatFile;
-            ByteBuffer bb = ByteBuffer(0);
             std::streampos pos = 0;
         public:
             akai_streambuf(FatFile* _fatFile) : fatFile (_fatFile) {}
@@ -116,7 +115,7 @@ public:
             }
             std::streamsize xsgetn (char* s, std::streamsize n) override
             {
-                bb.clearAndAllocate(n);
+                ByteBuffer bb(n);
                 fatFile->read(pos, bb);
                 auto& buf = bb.getBuffer();
                 for (size_t i=0;i<n;i++) s[i]=buf[i];
