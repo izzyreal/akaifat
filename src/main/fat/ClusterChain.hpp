@@ -129,12 +129,13 @@ namespace akaifat::fat {
             auto dev = getDevice();
 
             int chainIdx = (int) (offset / clusterSize);
+            
 
             if (offset % clusterSize != 0) {
                 int clusOfs = (int) (offset % clusterSize);
                 int size = std::min(len,
                                     (int) (clusterSize - (offset % clusterSize)));
-                //dest.limit(dest.position() + size);
+                dest.limit(dest.position() + size);
 
                 dev->read(getDevOffset(chain[chainIdx], clusOfs), dest);
 
@@ -144,7 +145,7 @@ namespace akaifat::fat {
 
             while (len > 0) {
                 int size = std::min(clusterSize, len);
-                //dest.limit(dest.position() + size);
+                dest.limit(dest.position() + size);
 
                 dev->read(getDevOffset(chain[chainIdx], 0), dest);
 
