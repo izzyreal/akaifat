@@ -119,7 +119,7 @@ public:
                 bb.clearAndAllocate(n);
                 fatFile->read(pos, bb);
                 auto& buf = bb.getBuffer();
-                for (int i=0;i<n;i++) s[i]=buf[i];
+                for (size_t i=0;i<n;i++) s[i]=buf[i];
                 pos += n;
                 return n;
             }
@@ -137,23 +137,37 @@ public:
         class akai_streambuf : public std::streambuf
         {
         private:
+            std::streampos pos = 0;
             FatFile* fatFile;
             ByteBuffer bb = ByteBuffer(0);
         public:
             akai_streambuf(FatFile* _fatFile) : fatFile (_fatFile) {}
         protected:
+            std::streampos seekoff(std::streamoff off, std::ios_base::seekdir way, std::ios_base::openmode = std::ios_base::out) override
+            {
+                if (way == std::ios_base::beg)
+                    pos = off;
+                else if (way == std::ios_base::cur)
+                    pos += off;
+                else if (way == std::ios_base::end)
+                    pos = fatFile->getLength() + off;
+                return pos;
+            }
             std::streamsize xsputn (const char* s, std::streamsize n) override
             {
-                if (bb.capacity() != n) bb.clearAndAllocate(n);
+                bb.clearAndAllocate(n);
                 auto& buf = bb.getBuffer();
-                for (int i=0;i<n;i++) buf[i]=s[i];
-                fatFile->write(n, bb);
+                for (size_t i=0;i<n;i++) buf[i]=s[i];
+                fatFile->write(pos, bb);
+                pos += n;
                 return n;
             }
         };
         
-        if (obuf == nullptr)
-            obuf = new akai_streambuf(this);
+        if (obuf != nullptr)
+            delete obuf;
+        
+        obuf = new akai_streambuf(this);
         
         return std::make_unique<std::ostream>(ibuf);
     }
