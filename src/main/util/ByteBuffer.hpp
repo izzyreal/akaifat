@@ -15,7 +15,7 @@ public:
     : buf (std::vector<char>(size)), limit_ (size) {}
     ByteBuffer(std::vector<char>& data) : buf (data), limit_ (data.size()) {}
 
-    void clearAndAllocate(long newSize) { buf.clear(); pos = 0; limit_ = 0; buf.resize(newSize); }
+    void clearAndAllocate(long newSize) { buf.clear(); pos = 0; limit_ = newSize; buf.resize(newSize); }
     
     void flip() { limit_ = pos; pos = 0; }
     
@@ -54,10 +54,18 @@ public:
     
     long position() { return pos; }
     void position(long newPos) { pos = newPos; }
-    long remaining() { return buf.size() - pos; }
-    bool hasRemaining() { return remaining() > 0; }
+    long remaining() { return limit_ - pos; }
+    bool hasRemaining() { return pos < limit_; }
     void rewind() { pos = 0; }
-    void limit(long newLimit) { limit_ = newLimit; }
+    
+    void limit(long newLimit) {
+        if (newLimit > buf.size() || newLimit < 0)
+            throw new std::runtime_error("Invalid limit");
+        
+        limit_ = newLimit;
+        if (pos > limit_) pos = limit_;
+    }
+
     long limit() { return limit_; }
 
     void put(char c) { buf[pos++] = c; }

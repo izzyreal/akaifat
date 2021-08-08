@@ -129,7 +129,6 @@ namespace akaifat::fat {
             auto dev = getDevice();
 
             int chainIdx = (int) (offset / clusterSize);
-            
 
             if (offset % clusterSize != 0) {
                 int clusOfs = (int) (offset % clusterSize);
