@@ -73,7 +73,7 @@ public:
             return;
         }
 
-        img.seekg(devOffset);
+        img.seekg(devOffset, std::ios::beg);
         std::vector<char>& buf = dest.getBuffer();
 
         auto toRead = dest.limit() - dest.position();
@@ -83,34 +83,46 @@ public:
 
     void write(long devOffset, ByteBuffer& src) override {
         if (isClosed()) throw std::runtime_error("device closed");
+        
+        const auto remaining = src.remaining();
 
-        auto toWriteTotal = src.remaining();
-        if ((devOffset + toWriteTotal) > getSize()) throw std::runtime_error("writing past end of device");
+        const auto offsetWithinSector = devOffset % 512;
+        const auto sectorOffset = devOffset - offsetWithinSector;
+        
+        if ((sectorOffset + remaining) > getSize()) throw std::runtime_error("writing past end of device");
+                
+        auto toWrite = offsetWithinSector + remaining;
+        const auto appendSize = 512 - (toWrite % 512);
+        toWrite += appendSize;
 
-        img.seekp(devOffset);
-        auto toWrite = src.limit() - src.position();
-
-        if (toWrite % 512 != 0)
+        ByteBuffer prepend(512);
+        read(sectorOffset, prepend);
+        prepend.flip();
+        
+        ByteBuffer append(512);
+        read( (sectorOffset + toWrite) - 512, append);
+        append.flip();
+        
+        ByteBuffer data(toWrite);
+                
+        for (int i = 0; i < toWrite; i++)
         {
-            int padSize = 512 - (toWrite % 512);
-            int firstPos = (devOffset + toWrite + padSize) - 512;
-            ByteBuffer onDisk(512);
-            read(firstPos, onDisk);
-            
-            for (int i = toWrite; i < toWrite + padSize; i++)
-                src.put(i, onDisk.getBuffer()[i % 512]);
-
-            toWrite += padSize;
+            if (i < offsetWithinSector) {
+                data.put(prepend.get());
+            } else if ( (i - offsetWithinSector) < remaining) {
+                data.put(src.get());
+            } else {
+                data.put(append.get());
+            }
         }
-
-        img.seekp(devOffset);
-
-        std::vector<char>& buf = src.getBuffer();
-        img.write(&buf[0] + src.position(), toWrite);
-        src.position(src.position() + toWrite);
+        
+        img.seekp(sectorOffset, std::ios::beg);
+        auto& buf = data.getBuffer();
+        img.write(&buf[0], toWrite);
     }
             
     void flush() override {
+        img.flush();
     }
 
     int getSectorSize() override {

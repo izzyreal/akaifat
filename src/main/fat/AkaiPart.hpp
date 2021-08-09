@@ -1,5 +1,7 @@
 #pragma once
 
+#include "LittleEndian.hpp"
+
 #include <string>
 #include <utility>
 #include <vector>
@@ -20,17 +22,10 @@ namespace akaifat::fat {
         std::vector<char> nameBytes;
 
     public:
-        static std::vector<std::string> &validChars() {
-            static std::vector<std::string> result{" ", "!", "#", "$", "%", "&",
-                                                   "'", "(", ")", "-", "0", "1", "2", "3", "4", "5", "6", "7", "8",
-                                                   "9", "@", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K",
-                                                   "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X",
-                                                   "Y", "Z", "_", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j",
-                                                   "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w",
-                                                   "x", "y", "z", "{", "}", "~"};
-            return result;
-        }
-
+        static std::vector<std::string> validChars_;
+        
+        static std::vector<std::string>& validChars() { return AkaiPart::validChars_; }
+        
         explicit AkaiPart(std::string akaiPart) {
 
             if (akaiPart.length() > 8) throw std::runtime_error("Akai part too long");
