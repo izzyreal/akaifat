@@ -224,5 +224,31 @@ namespace akaifat::fat {
         void setReadonlyFlag(bool isReadonly) {
             setFlag(F_READONLY, isReadonly);
         }
+        
+        std::string getLfnPart() {
+                char unicodechar[13];
+
+                unicodechar[0] = (char) LittleEndian::getUInt16(data, 1) & 0xff;
+                unicodechar[1] = (char) LittleEndian::getUInt16(data, 3) & 0xff;
+                unicodechar[2] = (char) LittleEndian::getUInt16(data, 5) & 0xff;
+                unicodechar[3] = (char) LittleEndian::getUInt16(data, 7) & 0xff;
+                unicodechar[4] = (char) LittleEndian::getUInt16(data, 9) & 0xff;
+                unicodechar[5] = (char) LittleEndian::getUInt16(data, 14) & 0xff;
+                unicodechar[6] = (char) LittleEndian::getUInt16(data, 16) & 0xff;
+                unicodechar[7] = (char) LittleEndian::getUInt16(data, 18) & 0xff;
+                unicodechar[8] = (char) LittleEndian::getUInt16(data, 20) & 0xff;
+                unicodechar[9] = (char) LittleEndian::getUInt16(data, 22) & 0xff;
+                unicodechar[10] = (char) LittleEndian::getUInt16(data, 24) & 0xff;
+                unicodechar[11] = (char) LittleEndian::getUInt16(data, 28) & 0xff;
+                unicodechar[12] = (char) LittleEndian::getUInt16(data, 30) & 0xff;
+
+                int end = 0;
+
+                while ((end < 13) && (unicodechar[end] != '\0')) {
+                    end++;
+                }
+                
+                return std::string(unicodechar).substr(0, end);
+            }
     };
 }

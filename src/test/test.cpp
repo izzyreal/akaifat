@@ -14,6 +14,8 @@
 #include "util/RemovableVolumes.h"
 #include "util/VolumeMounter.h"
 
+#include "util/string_util.hpp"
+
 using namespace akaifat;
 using namespace akaifat::fat;
 using namespace akaifat::util;
@@ -146,11 +148,10 @@ AkaiFatTestsFixture::~AkaiFatTestsFixture() {
 
 int AkaiFatTestsFixture::uniqueID = 0;
 
-/*
 TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can read", "[read]") {
     auto bs = std::dynamic_pointer_cast<Fat16BootSector>(fs->getBootSector());
 
-    auto volumeLabel = StrUtil::trim_copy(bs->getVolumeLabel());
+    auto volumeLabel = AkaiStrUtil::trim_copy(bs->getVolumeLabel());
 
     REQUIRE(volumeLabel == "MPC2000XL");
 }
@@ -166,7 +167,7 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     init(false);
 
     auto bs = std::dynamic_pointer_cast<Fat16BootSector>(fs->getBootSector());
-    auto volumeLabel = StrUtil::trim_copy(bs->getVolumeLabel());
+    auto volumeLabel = AkaiStrUtil::trim_copy(bs->getVolumeLabel());
 
     REQUIRE (volumeLabel == "MPC2000XL");
     // END Volume label
@@ -293,4 +294,3 @@ TEST_CASE_METHOD(AkaiFatTestsFixture, "akaifat can write and read the written", 
     // Don't call close() because it will be called by the fixture's destructor
 
 }
-*/

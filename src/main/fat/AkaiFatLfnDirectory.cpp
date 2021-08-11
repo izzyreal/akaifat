@@ -95,7 +95,8 @@ std::shared_ptr<FsDirectoryEntry> AkaiFatLfnDirectory::addDirectory(std::string 
     auto e = std::make_shared<AkaiFatLfnDirectoryEntry>(shared_from_this(), real, name);
 
     try {
-        dir->addEntry(real);
+        for (auto& e : e->compactForm())
+            dir->addEntry(e);
     } catch (std::exception &ex) {
         ClusterChain cc(fat.get(), real->getStartCluster(), false);
         cc.setChainLength(0);
@@ -234,10 +235,12 @@ void AkaiFatLfnDirectory::parseLfn() {
 void AkaiFatLfnDirectory::updateLFN() {
     std::vector<std::shared_ptr<FatDirectoryEntry>> dest;
 
-    for (auto &currentEntry : akaiNameIndex) {
-        dest.push_back(currentEntry.second->realEntry);
+    for (auto& entry : akaiNameIndex) {
+        for (auto& e : entry.second->compactForm())
+            dest.emplace_back(e);
+//        dest.push_back(entry.second->realEntry);
     }
-
+    
     dir->changeSize(static_cast<int>(dest.size()));
     dir->setEntries(dest);
 }

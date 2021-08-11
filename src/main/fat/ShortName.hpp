@@ -189,10 +189,23 @@ namespace akaifat::fat {
         bool equals(const ShortName &other) {
             if (nameBytes.size() != other.nameBytes.size()) return false;
 
-            for (int i = 0; i < nameBytes.size(); i++)
+            for (size_t i = 0; i < nameBytes.size(); i++)
                 if (nameBytes[i] != other.nameBytes[i]) return false;
 
             return true;
+        }
+        
+        char checkSum() {
+            char dest[11];
+            for (size_t i = 0; i < 11; i++)
+                dest[i] = nameBytes[i];
+
+            char sum = dest[0];
+            for (size_t i = 1; i < 11; i++) {
+                sum = static_cast<char>(dest[i] + (((sum & 1) << 7) + ((sum & 0xfe) >> 1)));
+            }
+            
+            return (char) (sum & 0xff);
         }
     };
 }
