@@ -91,18 +91,6 @@ namespace akaifat::fat {
         }
 
         static std::shared_ptr<AkaiFatLfnDirectoryEntry> extract(std::shared_ptr<AkaiFatLfnDirectory> dir, int offset, int len) {
-            /*
-            auto realEntry = dir->dir->getEntry(offset + len - 1);
-            std::string shortName = realEntry->getShortName().asSimpleString();
-            std::string akaiPart = AkaiStrUtil::trim_copy(AkaiPart::parse(realEntry->data).asSimpleString());
-            std::string part1 = AkaiStrUtil::trim_copy(AkaiFatLfnDirectory::splitName(shortName)[0]);
-            std::string ext = AkaiStrUtil::trim_copy(AkaiFatLfnDirectory::splitName(shortName)[1]);
-
-            if (ext.length() > 0) ext = "." + ext;
-
-            std::string akaiFileName = part1 + akaiPart + ext;
-             */
-            
             auto realEntry = dir->dir->getEntry(offset + len - 1);
             std::string fileName;
             
@@ -172,6 +160,23 @@ namespace akaifat::fat {
             checkValid();
 
             return fileName;
+        }
+        
+        std::string getAkaiName() {
+            auto shortName = ShortName::parse(realEntry->data).asSimpleString();
+            auto akaiPart = getAkaiPart();
+            
+            auto lastDot = shortName.find_last_of('.');
+            bool hasDot = lastDot != std::string::npos;
+            
+            std::string name = hasDot ? shortName.substr(0, lastDot) : shortName;
+            std::string ext = hasDot ? shortName.substr(lastDot + 1) : "";
+            
+            std::string finalName = name + akaiPart;
+            
+            if (hasDot) finalName += ("." + ext);
+            
+            return finalName;
         }
 
         std::string getAkaiPart() {

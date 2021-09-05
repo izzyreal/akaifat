@@ -12,12 +12,18 @@ void RemovableVolumes::diskAppeared(DADiskRef disk, void* context)
 
     auto ejectable = (NSString*)CFDictionaryGetValue(properties, kDADiskDescriptionMediaEjectableKey);
     auto volumeMountable = (NSString*) CFDictionaryGetValue(properties, kDADiskDescriptionVolumeMountableKey);
-
-    if (ejectable.intValue == 1 && volumeMountable.intValue == 1)
+    auto mediaLeaf = (NSString*) CFDictionaryGetValue(properties, kDADiskDescriptionMediaLeafKey);
+    
+    if (mediaLeaf.intValue == 1 && ejectable.intValue == 1 && volumeMountable.intValue == 1)
     {
+        NSString* volumeKind = (NSString*) CFDictionaryGetValue(properties, kDADiskDescriptionVolumeKindKey);
+        auto volumeKindStr = volumeKind.UTF8String;
+        bool isMsDos = strcmp(volumeKindStr, "msdos") == 0;
+
+        if (!isMsDos) return;
+        
         NSString* volumeType = (NSString*) CFDictionaryGetValue(properties, kDADiskDescriptionVolumeTypeKey);
         auto volumeTypeStr = volumeType.UTF8String;
-        printf("Volume type: %s\n", volumeTypeStr);
         bool isFat16 = strcmp(volumeTypeStr, "MS-DOS (FAT16)") == 0;
         
         if (!isFat16) return;
