@@ -121,7 +121,7 @@ namespace akaifat::fat {
 
             int len = (int) dest.remaining();
 
-            if ((startCluster == 0 && len > 0)) {
+            if (startCluster == 0 && len > 0) {
                 throw std::runtime_error("cannot read from empty cluster chain");
             }
 
@@ -132,7 +132,7 @@ namespace akaifat::fat {
 
             if (offset % clusterSize != 0) {
                 int clusOfs = (int) (offset % clusterSize);
-                int size = std::min(len,  clusterSize - (offset % clusterSize));
+                int size = std::min<int>(len,  clusterSize - (offset % clusterSize));
                 dest.limit(dest.position() + size);
 
                 dev->read(getDevOffset(chain[chainIdx], clusOfs), dest);
@@ -142,7 +142,7 @@ namespace akaifat::fat {
             }
 
             while (len > 0) {
-                int size = std::min(clusterSize, len);
+                int size = std::min<int>(clusterSize, len);
                 dest.limit(dest.position() + size);
 
                 dev->read(getDevOffset(chain[chainIdx], 0), dest);
@@ -169,7 +169,7 @@ namespace akaifat::fat {
 
             if (offset % clusterSize != 0) {
                 int clusOfs = (int) (offset % clusterSize);
-                int size = std::min(len,
+                int size = std::min<int>(len,
                                     (int) (clusterSize - (offset % clusterSize)));
                 srcBuf.limit(srcBuf.position() + size);
 
@@ -180,7 +180,7 @@ namespace akaifat::fat {
             }
 
             while (len > 0) {
-                int size = std::min(clusterSize, len);
+                int size = std::min<int>(clusterSize, len);
                 srcBuf.limit(srcBuf.position() + size);
 
                 device->write(getDevOffset(chain[chainIdx], 0), srcBuf);

@@ -33,7 +33,7 @@ namespace akaifat::fat {
             if (size > MAX_SIZE)
                 throw std::runtime_error("directory would grow beyond " + std::to_string(MAX_SIZE) + " bytes");
 
-            sizeChanged(chain->setSize(std::max(size, chain->getClusterSize())));
+            sizeChanged(chain->setSize(std::max<long>(size, chain->getClusterSize())));
         }
 
     public:
