@@ -21,7 +21,7 @@ using namespace akaifat::fat;
 using namespace akaifat::util;
 
 const auto IMAGE_NAME = "tmpakaifat.img";
-const auto IMAGE_SIZE = 16 * 1024 * 1024;
+const auto IMAGE_SIZE = 5 * 1024 * 1024;
 
 void createImage()
 {
