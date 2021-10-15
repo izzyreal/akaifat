@@ -178,7 +178,7 @@ AkaiFatLfnDirectory::unlinkEntry(std::string &entryName, bool isFile, std::share
 }
 
 void AkaiFatLfnDirectory::linkEntry(const std::shared_ptr<AkaiFatLfnDirectoryEntry> &entry) {
-    auto name = entry->getAkaiName();
+    auto name = entry->getName();
     checkUniqueName(name);
     entry->realEntry->setAkaiName(name);
     akaiNameIndex[AkaiStrUtil::to_lower_copy(name)] = entry;

@@ -2,6 +2,8 @@
 
 #include "LittleEndian.hpp"
 
+#include "util/string_util.hpp"
+
 #include <string>
 #include <utility>
 #include <vector>
@@ -57,7 +59,8 @@ namespace akaifat::fat {
         }
 
         std::string asSimpleString() {
-            return std::string(begin(nameBytes), end(nameBytes));
+            auto res = std::string(begin(nameBytes), end(nameBytes));
+            return AkaiStrUtil::trim(res);
         }
 
         static void checkValidChars(const std::vector<char> &chars) {
