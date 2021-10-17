@@ -190,8 +190,6 @@ void AkaiFatLfnDirectory::checkUniqueName(std::string &name) {
     
     if (!usedAkaiNames.emplace(lowerName).second) {
         throw std::runtime_error("an entry named " + name + " already exists");
-    } else {
-        usedAkaiNames.erase(lowerName);
     }
 }
 
@@ -238,7 +236,6 @@ void AkaiFatLfnDirectory::updateLFN() {
     for (auto& entry : akaiNameIndex) {
         for (auto& e : entry.second->compactForm())
             dest.emplace_back(e);
-//        dest.push_back(entry.second->realEntry);
     }
     
     dir->changeSize(static_cast<int>(dest.size()));
