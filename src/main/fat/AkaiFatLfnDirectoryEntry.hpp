@@ -35,11 +35,11 @@ namespace akaifat::fat {
             const char* unicodechar1 = subName.c_str();
             for (int i = 0; i < 13; i++) unicodechar[i] = unicodechar1[i];
             
-            for (int i=subName.length(); i < 13; i++) {
+            for (auto i=subName.length(); i < 13; i++) {
                 if (i==subName.length()) {
                     unicodechar[i] = 0x0000;
                 } else {
-                    unicodechar[i] = 0xffff;
+                    unicodechar[i] = static_cast<char>(0xffff);
                 }
             }
 
