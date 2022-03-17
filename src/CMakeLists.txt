@@ -69,6 +69,7 @@ if (UNIX AND NOT APPLE)
     include(FindPkgConfig)
     pkg_search_module(udisks2 REQUIRED udisks2)
     target_include_directories(akaifat SYSTEM PUBLIC ${udisks2_INCLUDE_DIRS})
+    target_link_libraries(akaifat ${udisks2_LIBRARIES})
 endif()
 
 if (APPLE)
