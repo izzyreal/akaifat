@@ -72,7 +72,7 @@ if (UNIX AND NOT APPLE)
     target_link_libraries(akaifat ${udisks2_LIBRARIES})
 endif()
 
-if (APPLE)
+if (APPLE AND NOT CMAKE_SYSTEM_NAME STREQUAL iOS)
     target_link_libraries(akaifat stdc++ "-framework Foundation -framework Security -framework DiskArbitration -framework SystemConfiguration")
 endif()
 

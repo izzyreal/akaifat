@@ -1,7 +1,10 @@
 #pragma once
 
 #ifdef __APPLE__
-#include <DiskArbitration/DiskArbitration.h>
+    #include <TargetConditionals.h>
+    #if !TARGET_OS_IOS
+        #include <DiskArbitration/DiskArbitration.h>
+    #endif
 #elif _WIN32
 #include <set>
 #elif __linux__
@@ -34,20 +37,25 @@ public:
     {
         running = false;
 
+#if !TARGET_OS_IOS
         while (!changeListenerThread.joinable())
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
 
         changeListenerThread.join();
+#endif
     }
 
     void addListener(VolumeChangeListener* l)
     {
         listeners.emplace_back(l);
     }
-
+#if (defined __APPLE__ && TARGET_OS_IOS)
+    void init(){}
+#else
     void init();
+#endif
 
 private:
     bool running = false;
@@ -55,8 +63,10 @@ private:
     std::vector<VolumeChangeListener*> listeners;
 
 #ifdef __APPLE__
+#if !TARGET_OS_IOS
     static void diskAppeared(DADiskRef disk, void* context);
     static void diskDisappeared(DADiskRef disk, void* context);
+#endif
 #elif _WIN32
     std::set<std::string> volumes;
     void detectChanges();
