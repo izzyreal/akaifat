@@ -1,6 +1,6 @@
 #ifdef __APPLE__
 #include <TargetConditionals.h>
-#ifdef TARGET_IPHONE_SIMULATOR
+#if TARGET_OS_IOS
 
 #include "VolumeMounter.h"
 

@@ -69,7 +69,6 @@ void RemovableVolumes::diskAppeared(DADiskRef disk, void* context)
 
 void RemovableVolumes::diskDisappeared(DADiskRef disk, void* context)
 {
-    printf("Bla bla bla\n");
 }
 
 void RemovableVolumes::init()

@@ -2,7 +2,7 @@
 
 #ifdef __APPLE__
     #include <TargetConditionals.h>
-    #if !defined(TARGET_IPHONE_SIMULATOR)
+    #if !TARGET_OS_IOS
         #include <DiskArbitration/DiskArbitration.h>
     #endif
 #elif _WIN32
@@ -37,19 +37,21 @@ public:
     {
         running = false;
 
-//        while (!changeListenerThread.joinable())
-//        {
-//            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-//        }
-//
-//        changeListenerThread.join();
+#if !TARGET_OS_IOS
+        while (!changeListenerThread.joinable())
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+
+        changeListenerThread.join();
+#endif
     }
 
     void addListener(VolumeChangeListener* l)
     {
         listeners.emplace_back(l);
     }
-#if defined(__APPLE__) && defined(TARGET_IPHONE_SIMULATOR)
+#if (defined __APPLE__ && TARGET_OS_IOS)
     void init(){}
 #else
     void init();
@@ -61,7 +63,7 @@ private:
     std::vector<VolumeChangeListener*> listeners;
 
 #ifdef __APPLE__
-#if !defined(TARGET_IPHONE_SIMULATOR)
+#if !TARGET_OS_IOS
     static void diskAppeared(DADiskRef disk, void* context);
     static void diskDisappeared(DADiskRef disk, void* context);
 #endif
