@@ -4,10 +4,6 @@ project(akaifat)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "-fPIC")
 
-if(DEFINED ENV{APPLE_M1})
-    set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE INTERNAL "")
-endif()
-
 if(APPLE)
   set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE INTERNAL "Minimum OS X deployment version")
 endif()
