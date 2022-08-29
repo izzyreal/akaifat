@@ -1,11 +1,14 @@
 cmake_minimum_required(VERSION 3.13)
 
-include(cmake/CPM.cmake)
+include(FetchContent)
 
-CPMAddPackage("gh:catchorg/Catch2#v3.1.0")
+FetchContent_Declare(Catch2
+  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+  GIT_TAG        v3.1.0
+  SOURCE_DIR     ${CMAKE_SOURCE_DIR}/deps/Catch2
+)
 
-set(AKAIFAT_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" CACHE STRING "Setting AKAIFAT_SOURCE_DIR")
-set(AKAIFAT_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}" CACHE STRING "Setting AKAIFAT_BINARY_DIR")
+FetchContent_MakeAvailable(Catch2)
 
 project(akaifat)
 
@@ -35,23 +38,17 @@ if (MACOSX)
         GLOB_RECURSE _source_list_main 
         LIST_DIRECTORIES false
         RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-        "${_src_root_path_main}/*.c"
-        "${_src_root_path_main}/*.mm"
-        "${_src_root_path_main}/*.cpp"
-        "${_src_root_path_main}/*.h"
-        "${_src_root_path_main}/*.hpp"
-	   "${_src_root_path_main}/*.hxx"
+        "${_src_root_path_main}/*.c*"
+        "${_src_root_path_main}/*.h*"
+        "${_src_root_path_main}/*.m*"
     )
 else()
     file(
         GLOB_RECURSE _source_list_main 
         LIST_DIRECTORIES false
         RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-        "${_src_root_path_main}/*.c"
-        "${_src_root_path_main}/*.cpp"
-        "${_src_root_path_main}/*.h"
-        "${_src_root_path_main}/*.hpp"
-       "${_src_root_path_main}/*.hxx"
+        "${_src_root_path_main}/*.c*"
+        "${_src_root_path_main}/*.h*"
     )    
 endif()
 
@@ -86,8 +83,7 @@ file(
     LIST_DIRECTORIES false
     RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
     "${_src_root_path_test}/*.c*"
-    "${_src_root_path_test}/*.cpp*"
-    "${_src_root_path_test}/*.hpp*"
+    "${_src_root_path_test}/*.h*"
 )
 
 foreach(_source IN ITEMS ${_source_list_test})
