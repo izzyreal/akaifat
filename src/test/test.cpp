@@ -3,7 +3,7 @@
 #define CATCH_CONFIG_MAIN
 #define CATCH_CONFIG_DISABLE_EXCEPTIONS
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 #include "util/SuperFloppyFormatter.hpp"
 #include "ImageBlockDevice.hpp"

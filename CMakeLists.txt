@@ -1,24 +1,27 @@
 cmake_minimum_required(VERSION 3.13)
 
+include(FetchContent)
+
+FetchContent_Declare(Catch2
+  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+  GIT_TAG        v3.1.0
+  SOURCE_DIR     ${CMAKE_SOURCE_DIR}/deps/Catch2
+)
+
+FetchContent_MakeAvailable(Catch2)
+
 project(akaifat)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "-fPIC")
 
 if(APPLE)
-  set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE INTERNAL "Minimum OS X deployment version")
+  set(CMAKE_OSX_DEPLOYMENT_TARGET "10.11" CACHE INTERNAL "Minimum OS X deployment version")
 endif()
-
-if(EXISTS ${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo_multi.cmake)
-    include(${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo_multi.cmake)
-else()
-    include(${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
-endif()
-
-conan_basic_setup(NO_OUTPUT_DIRS)
 
 ## Configure main lib ##
 
-set(_src_root_path_main "${CMAKE_CURRENT_SOURCE_DIR}/main")
+set(_src_root_path_main "${CMAKE_CURRENT_SOURCE_DIR}/src/main")
 
 include_directories(${_src_root_path_main})
 
@@ -31,23 +34,17 @@ if (MACOSX)
         GLOB_RECURSE _source_list_main 
         LIST_DIRECTORIES false
         RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-        "${_src_root_path_main}/*.c"
-        "${_src_root_path_main}/*.mm"
-        "${_src_root_path_main}/*.cpp"
-        "${_src_root_path_main}/*.h"
-        "${_src_root_path_main}/*.hpp"
-	   "${_src_root_path_main}/*.hxx"
+        "${_src_root_path_main}/*.c*"
+        "${_src_root_path_main}/*.h*"
+        "${_src_root_path_main}/*.m*"
     )
 else()
     file(
         GLOB_RECURSE _source_list_main 
         LIST_DIRECTORIES false
         RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-        "${_src_root_path_main}/*.c"
-        "${_src_root_path_main}/*.cpp"
-        "${_src_root_path_main}/*.h"
-        "${_src_root_path_main}/*.hpp"
-       "${_src_root_path_main}/*.hxx"
+        "${_src_root_path_main}/*.c*"
+        "${_src_root_path_main}/*.h*"
     )    
 endif()
 
@@ -59,7 +56,6 @@ endforeach()
 
 
 add_library(akaifat ${_source_list_main})
-conan_target_link_libraries(akaifat)
 
 if (UNIX AND NOT APPLE)
     include(FindPkgConfig)
@@ -74,7 +70,7 @@ endif()
 
 ## Configure test suite application ##
 
-set(_src_root_path_test "${CMAKE_CURRENT_SOURCE_DIR}/test")
+set(_src_root_path_test "${CMAKE_CURRENT_SOURCE_DIR}/src/test")
 
 include_directories(${_src_root_path_test})
 
@@ -83,8 +79,7 @@ file(
     LIST_DIRECTORIES false
     RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
     "${_src_root_path_test}/*.c*"
-    "${_src_root_path_test}/*.cpp*"
-    "${_src_root_path_test}/*.hpp*"
+    "${_src_root_path_test}/*.h*"
 )
 
 foreach(_source IN ITEMS ${_source_list_test})
@@ -98,7 +93,7 @@ add_executable(akaifat-tests ${_source_list_test})
 if (UNIX AND NOT APPLE)
     set(THREADS_PREFER_PTHREAD_FLAG ON)
     find_package(Threads REQUIRED)
-    target_link_libraries(akaifat-tests Threads::Threads ${udisks2_LIBRARIES} akaifat)
+    target_link_libraries(akaifat-tests Threads::Threads ${udisks2_LIBRARIES} akaifat Catch2::Catch2WithMain)
 else()
-    target_link_libraries(akaifat-tests akaifat)
+    target_link_libraries(akaifat-tests akaifat Catch2::Catch2WithMain)
 endif()
