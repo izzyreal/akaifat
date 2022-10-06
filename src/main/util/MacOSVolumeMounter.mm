@@ -6,8 +6,6 @@
 #include <pwd.h>
 #include <unistd.h>
 
-#include <Foundation/Foundation.h>
-
 #include <Security/Authorization.h>
 #include <Security/AuthorizationTags.h>
 #include <SystemConfiguration/SystemConfiguration.h>
