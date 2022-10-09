@@ -2,7 +2,6 @@
 #include "RemovableVolumes.h"
 
 #include <Foundation/Foundation.h>
-#include <CoreFoundation/CoreFoundation.h>
 
 using namespace akaifat::util;
 
@@ -65,6 +64,8 @@ void RemovableVolumes::diskAppeared(DADiskRef disk, void* context)
         for (auto& l : that->listeners)
             l->processChange(RemovableVolume{volumeUUID, bsdNameStr, volumeNameStr, mediaSize});
     }
+
+    CFRelease(properties);
 }
 
 void RemovableVolumes::diskDisappeared(DADiskRef disk, void* context)
