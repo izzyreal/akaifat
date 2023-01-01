@@ -188,9 +188,9 @@ void AkaiFatLfnDirectory::linkEntry(const std::shared_ptr<AkaiFatLfnDirectoryEnt
 void AkaiFatLfnDirectory::checkUniqueName(std::string &name) {
     std::string lowerName = AkaiStrUtil::to_lower_copy(name);
     
-    if (!usedAkaiNames.emplace(lowerName).second) {
-        throw std::runtime_error("an entry named " + name + " already exists");
-    }
+//    if (!usedAkaiNames.emplace(lowerName).second) {
+//        throw std::runtime_error("an entry named " + name + " already exists");
+//    }
 }
 
 void AkaiFatLfnDirectory::parseLfn() {

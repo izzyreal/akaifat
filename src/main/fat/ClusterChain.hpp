@@ -30,8 +30,8 @@ namespace akaifat::fat {
             if (_startCluster != 0) {
                 fat->testCluster(_startCluster);
 
-                if (fat->isFreeCluster(_startCluster))
-                    throw std::runtime_error("cluster " + std::to_string(_startCluster) + " is free");
+//                if (fat->isFreeCluster(_startCluster))
+//                    throw std::runtime_error("cluster " + std::to_string(_startCluster) + " is free");
             }
 
             device = fat->getDevice();
