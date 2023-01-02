@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../fat/LittleEndian.hpp"
+
 #include <vector>
 #include <stdexcept>
 
@@ -82,8 +84,12 @@ public:
     std::int64_t capacity() { return buf.size(); }
 
     void putShort(std::int32_t offset, short s) {
-        buf[offset + 1] = (s >> 8);
-        buf[offset] = s & 0xFF;
+        fat::LittleEndian::setInt16(buf, offset, s);
+    }
+
+    void putInt(std::int32_t offset, std::int32_t value)
+    {
+        fat::LittleEndian::setInt32(buf, offset, value);
     }
 };
 }

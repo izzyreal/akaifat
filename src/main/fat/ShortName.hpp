@@ -64,7 +64,7 @@ namespace akaifat::fat {
         ShortName() = default;
 
         explicit ShortName(std::string &nameExt) {
-            if (nameExt.length() > 12) throw std::runtime_error("name too std::int64_t");
+            if (nameExt.length() > 12) throw std::runtime_error("name too long");
 
             auto i = nameExt.find_last_of('.');
 
@@ -130,7 +130,7 @@ namespace akaifat::fat {
             AkaiStrUtil::trim(name, " ");
             AkaiStrUtil::trim(ext, " ");
 
-            return ShortName(name, ext);
+            return {name, ext};
         }
 
         void write(std::vector<char> &dest) {
@@ -162,7 +162,7 @@ namespace akaifat::fat {
             name = AkaiStrUtil::trim(name);
             ext = AkaiStrUtil::trim(ext);
 
-            return ext.length() == 0 ? name : (name + "." + ext);
+            return ext.empty() ? name : (name + "." + ext);
         }
 
         static void checkValidChars(std::vector<char> &chars) {

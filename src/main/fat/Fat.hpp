@@ -55,7 +55,7 @@ public:
             throw std::runtime_error("boot sector says there are " + std::to_string(bs->getBytesPerSector()) +
                                      " bytes per sector");
 
-        sectorCount = (std::uint32_t) bs->getSectorsPerFat();
+        sectorCount = (std::int32_t) bs->getSectorsPerFat();
         sectorSize = bs->getBytesPerSector();
         lastAllocatedCluster = FIRST_CLUSTER;
 
@@ -65,7 +65,7 @@ public:
         if (bs->getDataClusterCount() == 0) throw
                     std::runtime_error("no data clusters");
 
-        lastClusterIndex = (std::uint32_t) bs->getDataClusterCount() + FIRST_CLUSTER;
+        lastClusterIndex = (std::int32_t) bs->getDataClusterCount() + FIRST_CLUSTER;
 
         entries = std::vector<std::int64_t>((sectorCount * sectorSize) /
                                     fatType->getEntrySize());
@@ -88,7 +88,7 @@ public:
         return result;
     }
     
-    static std::shared_ptr<Fat> create(std::shared_ptr<BootSector> bs, std::int32_t fatNr) {
+    static std::shared_ptr<Fat> create(const std::shared_ptr<BootSector>& bs, std::int32_t fatNr) {
         
         if (fatNr > bs->getNrFats()) {
             throw std::runtime_error("boot sector says there are only " + std::to_string(bs->getNrFats()) +
@@ -134,7 +134,7 @@ public:
     }
     
     std::int32_t getMediumDescriptor() {
-        return (std::uint32_t) (entries[0] & 0xFF);
+        return (std::int32_t) (entries[0] & 0xFF);
     }
     
     std::int64_t getEntry(std::int32_t index) {
@@ -150,17 +150,17 @@ public:
         // Count the chain first
         std::int32_t count = 1;
         std::int64_t cluster = startCluster;
-        while (!isEofCluster(entries[(std::uint32_t) cluster])) {
+        while (!isEofCluster(entries[(std::int32_t) cluster])) {
             count++;
-            cluster = entries[(std::uint32_t) cluster];
+            cluster = entries[(std::int32_t) cluster];
         }
         // Now create the chain
         std::vector<std::int64_t> chain(count);
         chain[0] = startCluster;
         cluster = startCluster;
         std::int32_t i = 0;
-        while (!isEofCluster(entries[(std::uint32_t) cluster])) {
-            cluster = entries[(std::uint32_t) cluster];
+        while (!isEofCluster(entries[(std::int32_t) cluster])) {
+            cluster = entries[(std::int32_t) cluster];
             chain[++i] = cluster;
         }
         return chain;
@@ -168,7 +168,7 @@ public:
 
     std::int64_t getNextCluster(std::int64_t cluster) {
         testCluster(cluster);
-        std::int64_t entry = entries[(std::uint32_t) cluster];
+        std::int64_t entry = entries[(std::int32_t) cluster];
         if (isEofCluster(entry)) {
             return -1;
         } else {
@@ -239,24 +239,24 @@ public:
         
         testCluster(cluster);
         
-        while (!isEofCluster(entries[(std::uint32_t) cluster])) {
-            cluster = entries[(std::uint32_t) cluster];
+        while (!isEofCluster(entries[(std::int32_t) cluster])) {
+            cluster = entries[(std::int32_t) cluster];
         }
         
         std::int64_t newCluster = allocNew();
-        entries[(std::uint32_t) cluster] = newCluster;
+        entries[(std::int32_t) cluster] = newCluster;
 
         return newCluster;
     }
 
     void setEof(std::int64_t cluster) {
         testCluster(cluster);
-        entries[(std::uint32_t) cluster] = fatType->getEofMarker();
+        entries[(std::int32_t) cluster] = fatType->getEofMarker();
     }
 
     void setFree(std::int64_t cluster) {
         testCluster(cluster);
-        entries[(std::uint32_t) cluster] = 0;
+        entries[(std::int32_t) cluster] = 0;
     }
     
     bool equals(const std::shared_ptr<Fat>& other) {
@@ -291,7 +291,6 @@ public:
         return hash;
     }
 
-    // Can be protected?
     void testCluster(std::int64_t cluster) {
         if ((cluster < FIRST_CLUSTER) || (cluster >= entries.size())) {
             throw std::runtime_error("invalid cluster value " + std::to_string(cluster));
@@ -300,7 +299,7 @@ public:
 
     bool isFreeCluster(std::int64_t entry) {
         if (entry > INT_MAX) throw std::runtime_error("entry is bigger than INT_MAX");
-        return (entries[(std::uint32_t) entry] == 0);
+        return (entries[(std::int32_t) entry] == 0);
     }
     
     bool isReservedCluster(std::int64_t entry) {

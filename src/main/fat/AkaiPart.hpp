@@ -35,7 +35,7 @@ namespace akaifat::fat {
             if (akaiPart.length() > 8) throw std::runtime_error("Akai part too std::int64_t");
 
             nameBytes = toCharArray(akaiPart);
-//            checkValidChars(nameBytes);
+            checkValidChars(nameBytes);
         }
 
         static AkaiPart get(std::string name) {
@@ -64,9 +64,6 @@ namespace akaifat::fat {
         }
 
         static void checkValidChars(const std::vector<char> &chars) {
-
-            if (chars[0] == 0x20) throw std::runtime_error("0x20 can not be the first character");
-
             for (std::int32_t i = 0; i < chars.size(); i++) {
                 if ((chars[i] & 0xff) != chars[i])
                     throw std::runtime_error("multi-byte character at " + std::to_string(i));

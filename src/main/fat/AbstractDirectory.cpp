@@ -22,7 +22,7 @@ void AbstractDirectory::sizeChanged(std::int64_t newSize) {
     if (newCount > INT_MAX)
         throw std::runtime_error("directory too large");
 
-    capacity = (std::uint32_t) newCount;
+    capacity = (std::int32_t) newCount;
 }
 
 void AbstractDirectory::read() {
@@ -56,7 +56,7 @@ int AbstractDirectory::getCapacity() const {
 }
 
 int AbstractDirectory::getEntryCount() {
-    return (std::uint32_t) entries.size();
+    return (std::int32_t) entries.size();
 }
 
 bool AbstractDirectory::isRoot() const {
@@ -64,7 +64,7 @@ bool AbstractDirectory::isRoot() const {
 }
 
 int AbstractDirectory::getSize() {
-    return (std::uint32_t) entries.size() + ((volumeLabel.length() != 0) ? 1 : 0);
+    return (std::int32_t) entries.size() + ((volumeLabel.length() != 0) ? 1 : 0);
 }
 
 void AbstractDirectory::flush() {

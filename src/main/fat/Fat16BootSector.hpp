@@ -4,6 +4,7 @@
 #include "FatType.hpp"
 
 #include <string>
+#include <utility>
 
 namespace akaifat::fat {
     class Fat16BootSector : public BootSector {
@@ -24,7 +25,7 @@ namespace akaifat::fat {
         static const std::int32_t EXTENDED_BOOT_SIGNATURE_OFFSET = 0x26;
 
         explicit Fat16BootSector(std::shared_ptr<BlockDevice> device)
-                : BootSector(device) {
+                : BootSector(std::move(device)) {
         }
 
         std::string getVolumeLabel() {
@@ -63,7 +64,7 @@ namespace akaifat::fat {
             if (v == getSectorsPerFat()) return;
             if (v > 0x7FFF) throw std::runtime_error("too many sectors for a FAT12/16");
 
-            set16(SECTORS_PER_FAT_OFFSET, (std::uint32_t) v);
+            set16(SECTORS_PER_FAT_OFFSET, (std::int32_t) v);
         }
 
 
@@ -100,7 +101,7 @@ namespace akaifat::fat {
                 setNrLogicalSectors(0);
                 setNrTotalSectors(count);
             } else {
-                setNrLogicalSectors((std::uint32_t) count);
+                setNrLogicalSectors((std::int32_t) count);
                 setNrTotalSectors(count);
             }
         }

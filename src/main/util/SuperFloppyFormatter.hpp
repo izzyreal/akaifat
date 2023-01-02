@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 
 namespace akaifat {
 class SuperFloppyFormatter {
@@ -23,8 +24,8 @@ private:
     std::string label;
     std::string oemName;
     std::shared_ptr<akaifat::fat::FatType> fatType;
-    std::int32_t sectorsPerCluster;
-    std::int32_t reservedSectors;
+    std::int32_t sectorsPerCluster{};
+    std::int32_t reservedSectors{};
     
     std::int32_t sectorsPerCluster16() {
         if (reservedSectors != 1) throw std::runtime_error(
@@ -55,8 +56,8 @@ private:
     
     void initBootSector(akaifat::fat::BootSector& bs) {
         bs.init();
-        auto label = fatType->getLabel();
-        bs.setFileSystemTypeLabel(label);
+        auto fatTypeLabel = fatType->getLabel();
+        bs.setFileSystemTypeLabel(fatTypeLabel);
         bs.setNrReservedSectors(reservedSectors);
         bs.setNrFats(fatCount);
         bs.setSectorsPerCluster(sectorsPerCluster);
@@ -66,7 +67,7 @@ private:
         bs.setOemName(oemName);
     }
     
-    std::int32_t rootDirectorySize(std::int32_t bps, std::int32_t nbTotalSectors) {
+    static std::int32_t rootDirectorySize(std::int32_t bps, std::int32_t nbTotalSectors) {
         const std::int32_t totalSize = bps * nbTotalSectors;
         if (totalSize >= MAX_DIRECTORY * 5 * 32) {
             return MAX_DIRECTORY;
@@ -83,24 +84,22 @@ private:
                     totalSectors - (reservedSectors + rootDirSectors);
             std::int32_t tmp2 = (256 * sectorsPerCluster) + fatCount;
 
-            auto result = (std::uint32_t) ((tmp1 + (tmp2 - 1)) / tmp2);
-            
-            return result;
+            return static_cast<int32_t>((tmp1 + (tmp2 - 1)) / tmp2);
         }
     
 public:
-    void setVolumeLabel(std::string _label) {
-        label = _label;
+    void setVolumeLabel(std::string labelToUse) {
+        label = std::move(labelToUse);
     }
     
     akaifat::fat::AkaiFatFileSystem* format() {
         const std::int32_t sectorSize = device->getSectorSize();
-        const std::int32_t totalSectors = (std::uint32_t)(device->getSize() / sectorSize);
+        const auto totalSectors = (std::int32_t)(device->getSize() / sectorSize);
         
         if (sectorsPerCluster == 0) throw std::runtime_error("sectorsPerCluster == 0");
         
         auto f16bs = std::make_shared<akaifat::fat::Fat16BootSector>(device);
-        initBootSector(*f16bs.get());
+        initBootSector(*f16bs);
         
         std::int32_t rootDirEntries = rootDirectorySize(device->getSectorSize(), totalSectors);
         
@@ -132,14 +131,14 @@ public:
         return fs;
     }
     
-    void setFatType(std::shared_ptr<akaifat::fat::FatType> _fatType) {
+    void setFatType(std::shared_ptr<akaifat::fat::FatType> fatTypeToUse) {
         reservedSectors = 1;
         sectorsPerCluster = sectorsPerCluster16();
-        fatType = _fatType;
+        fatType = std::move(fatTypeToUse);
     }
     
     SuperFloppyFormatter(std::shared_ptr<BlockDevice> _device)
-    : device (_device), oemName (DEFAULT_OEM_NAME()),
+    : device (std::move(_device)), oemName (DEFAULT_OEM_NAME()),
     fatCount (DEFAULT_FAT_COUNT) {
         setFatType(std::make_shared<akaifat::fat::Fat16Type>());
     }

@@ -30,8 +30,10 @@ namespace akaifat::fat {
             if (_startCluster != 0) {
                 fat->testCluster(_startCluster);
 
-//                if (fat->isFreeCluster(_startCluster))
-//                    throw std::runtime_error("cluster " + std::to_string(_startCluster) + " is free");
+                if (fat->isFreeCluster(_startCluster))
+                {
+                    throw std::runtime_error("cluster " + std::to_string(_startCluster) + " is free");
+                }
             }
 
             device = fat->getDevice();
@@ -67,7 +69,7 @@ namespace akaifat::fat {
             if (nrClusters > INT_MAX)
                 throw std::runtime_error("too many clusters");
 
-            setChainLength((std::uint32_t) nrClusters);
+            setChainLength((std::int32_t) nrClusters);
 
             return clusterSize * nrClusters;
         }
@@ -119,7 +121,7 @@ namespace akaifat::fat {
 
         void readData(std::int64_t offset, ByteBuffer &dest) {
 
-            std::int32_t len = (std::uint32_t) dest.remaining();
+            std::int32_t len = (std::int32_t) dest.remaining();
 
             if (startCluster == 0 && len > 0) {
                 throw std::runtime_error("cannot read from empty cluster chain");
@@ -128,10 +130,10 @@ namespace akaifat::fat {
             auto chain = getFat()->getChain(startCluster);
             auto dev = getDevice();
 
-            std::int32_t chainIdx = (std::uint32_t) (offset / clusterSize);
+            auto chainIdx = (std::int32_t) (offset / clusterSize);
 
             if (offset % clusterSize != 0) {
-                std::int32_t clusOfs = (std::uint32_t) (offset % clusterSize);
+                auto clusOfs = (std::int32_t) (offset % clusterSize);
                 std::int32_t size = std::min<int>(len,  clusterSize - (offset % clusterSize));
                 dest.limit(dest.position() + size);
 
@@ -165,12 +167,12 @@ namespace akaifat::fat {
 
             auto chain = fat->getChain(getStartCluster());
 
-            std::int32_t chainIdx = (std::uint32_t) (offset / clusterSize);
+            auto chainIdx = (std::int32_t) (offset / clusterSize);
 
             if (offset % clusterSize != 0) {
-                std::int32_t clusOfs = (std::uint32_t) (offset % clusterSize);
+                auto clusOfs = (std::int32_t) (offset % clusterSize);
                 std::int32_t size = std::min<int>(len,
-                                    (std::uint32_t) (clusterSize - (offset % clusterSize)));
+                                    (std::int32_t) (clusterSize - (offset % clusterSize)));
                 srcBuf.limit(srcBuf.position() + size);
 
                 device->write(getDevOffset(chain[chainIdx], clusOfs), srcBuf);

@@ -188,7 +188,7 @@ namespace akaifat::fat {
 
         ShortName getShortName() {
             if (data[0] == 0) {
-                return ShortName("", "");
+                return {"", ""};
             } else {
                 return ShortName::parse(data);
             }
@@ -213,7 +213,7 @@ namespace akaifat::fat {
             if (startCluster > INT_MAX)
                 throw std::runtime_error("startCluster too big");
 
-            LittleEndian::setInt16(data, 0x1a, (std::uint32_t) startCluster);
+            LittleEndian::setInt16(data, 0x1a, (std::int32_t) startCluster);
         }
 
         void write(ByteBuffer &buff) {

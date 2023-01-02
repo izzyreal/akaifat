@@ -95,8 +95,10 @@ std::shared_ptr<FsDirectoryEntry> AkaiFatLfnDirectory::addDirectory(std::string 
     auto e = std::make_shared<AkaiFatLfnDirectoryEntry>(shared_from_this(), real, name);
 
     try {
-        for (auto& e : e->compactForm())
-            dir->addEntry(e);
+        for (auto& compactFormEntry : e->compactForm())
+        {
+            dir->addEntry(compactFormEntry);
+        }
     } catch (std::exception &ex) {
         ClusterChain cc(fat.get(), real->getStartCluster(), false);
         cc.setChainLength(0);
@@ -121,18 +123,21 @@ std::shared_ptr<FsDirectoryEntry> AkaiFatLfnDirectory::getEntry(std::string &nam
     return {};
 }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "misc-no-recursion"
 void AkaiFatLfnDirectory::flush() {
     checkWritable();
 
-    for (auto f : entryToFile)
+    for (const auto& f : entryToFile)
         f.second->flush();
 
-    for (auto d : entryToDirectory)
+    for (const auto& d : entryToDirectory)
         d.second->flush();
 
     updateLFN();
     dir->flush();
 }
+#pragma clang diagnostic pop
 
 void AkaiFatLfnDirectory::remove(std::string name) {
     checkWritable();
@@ -154,8 +159,8 @@ void AkaiFatLfnDirectory::remove(std::string name) {
 }
 
 std::shared_ptr<AkaiFatLfnDirectoryEntry>
-AkaiFatLfnDirectory::unlinkEntry(std::string &entryName, bool isFile, std::shared_ptr<FatDirectoryEntry> realEntry) {
-    if (entryName.length() == 0 || entryName[0] == '.') return {};
+AkaiFatLfnDirectory::unlinkEntry(std::string &entryName, bool isFile, const std::shared_ptr<FatDirectoryEntry>& realEntry) {
+    if (entryName.empty() || entryName[0] == '.') return {};
 
     std::string lowerName = AkaiStrUtil::to_lower_copy(entryName);
 
@@ -188,9 +193,9 @@ void AkaiFatLfnDirectory::linkEntry(const std::shared_ptr<AkaiFatLfnDirectoryEnt
 void AkaiFatLfnDirectory::checkUniqueName(std::string &name) {
     std::string lowerName = AkaiStrUtil::to_lower_copy(name);
     
-//    if (!usedAkaiNames.emplace(lowerName).second) {
-//        throw std::runtime_error("an entry named " + name + " already exists");
-//    }
+    if (!usedAkaiNames.emplace(lowerName).second) {
+        throw std::runtime_error("an entry named " + name + " already exists");
+    }
 }
 
 void AkaiFatLfnDirectory::parseLfn() {
@@ -199,7 +204,7 @@ void AkaiFatLfnDirectory::parseLfn() {
 
     while (i < size) {
         while (i < size &&
-               (dir->getEntry(i) == nullptr || dir->getEntry(i)->getShortName().asSimpleString().length() == 0)) {
+               (dir->getEntry(i) == nullptr || dir->getEntry(i)->getShortName().asSimpleString().empty())) {
             i++;
         }
 

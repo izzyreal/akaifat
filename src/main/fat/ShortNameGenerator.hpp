@@ -1,57 +1,59 @@
 #pragma once
 
+#include <string>
 #include <set>
 #include <vector>
+#include <algorithm>
+
+#include "ShortName.hpp"
+
+#include "../util/string_util.hpp"
 
 namespace akaifat::fat {
 class ShortNameGenerator {
 private:
-	std::set<std::string> usedNames;
+	const std::set<std::string>& usedNames;
 	
-	std::string tidyString(std::string& dirty) {
-//		std::stringBuilder result = new std::stringBuilder();
-//
-//		for (std::int32_t src = 0; src < dirty.length(); src++) {
-//			char toTest = Character.toUpperCase(dirty.charAt(src));
-//			if (isSkipChar(toTest)) continue;
-//
-//			if (validChar(toTest)) {
-//				result.append(toTest);
-//			} else {
-//				result.append('_');
-//			}
-//		}
-//
-//		return result.tostd::string();
-        return "";
+	std::string tidyString(std::string dirty) {
+        std::string result;
+
+		for (auto& c : AkaiStrUtil::to_upper_copy(dirty)) {
+            if (isSkipChar(c)) continue;
+
+			if (validChar(c)) {
+				result.push_back(c);
+			} else {
+				result.push_back('_');
+			}
+		}
+
+        return result;
 	}
 
 	bool cleanString(std::string s) {
-//		for (std::int32_t i = 0; i < s.length(); i++) {
-//			if (isSkipChar(s.charAt(i))) return false;
-//			if (!validChar(s.charAt(i))) return false;
-//		}
-
+		for (auto& c : s) {
+			if (isSkipChar(c)) return false;
+			if (!validChar(c)) return false;
+		}
 		return true;
 	}
 
 	std::string stripLeadingPeriods(std::string str) {
-//		std::stringBuilder sb = new std::stringBuilder(str.length());
-//
-//		for (std::int32_t i = 0; i < str.length(); i++) {
-//			if (str.charAt(i) != '.') { // NOI18N
-//				sb.append(str.substring(i));
-//				break;
-//			}
-//		}
-//
-//		return sb.tostd::string();
-        return "";
+		std::string result;
+
+		for (std::int32_t i = 0; i < str.length(); i++) {
+			if (str[i] != '.') {
+				result += str.substr(i);
+				break;
+			}
+		}
+
+		return result;
 	}
 
 public:
-	ShortNameGenerator(std::set<std::string>& _usedNames)
-    : usedNames (_usedNames)
+	explicit ShortNameGenerator(std::set<std::string>& usedNamesToUse)
+    : usedNames(usedNamesToUse)
     {
     }
 
@@ -68,49 +70,48 @@ public:
 		return (c == '.') || (c == ' ');
 	}
 
-	ShortName generateShortName(std::string std::int64_tFullName) {
-//		std::int64_tFullName = stripLeadingPeriods(std::int64_tFullName).toUpperCase(Locale.ROOT);
-//
-//		std::string std::int64_tName;
-//		std::string std::int64_tExt;
-//		int dotIdx = std::int64_tFullName.lastIndexOf('.');
-//		bool forceSuffix;
-//
-//		if (dotIdx == -1) {
-//			forceSuffix = !cleanString(std::int64_tFullName);
-//			std::int64_tName = tidystd::string(std::int64_tFullName);
-//			std::int64_tExt = "";
-//		} else {
-//			forceSuffix = !cleanString(std::int64_tFullName.substring(0, dotIdx));
-//			std::int64_tName = tidystd::string(std::int64_tFullName.substring(0, dotIdx));
-//			std::int64_tExt = tidystd::string(std::int64_tFullName.substring(dotIdx + 1));
-//		}
-//
-//		std::string shortExt = (std::int64_tExt.length() > 3) ? std::int64_tExt.substring(0, 3) : std::int64_tExt;
-//
-//		if (forceSuffix || (std::int64_tName.length() > 8)
-//				|| usedNames.contains(new ShortName(std::int64_tName, shortExt).asSimpleString().toLowerCase(Locale.ROOT))) {
-//
-//			int maxLongIdx = Math.min(std::int64_tName.length(), 8);
-//
-//			for (std::int32_t i = 1; i < 99999; i++) {
-//				std::string serial = "~" + i; // NOI18N
-//				int serialLen = serial.length();
-//				std::string shortName = std::int64_tName.substring(0, Math.min(maxLongIdx, 8 - serialLen)) + serial;
-//				ShortName result = new ShortName(shortName, shortExt);
-//
-//				if (!usedNames.contains(result.asSimpleString().toLowerCase(Locale.ROOT))) {
-//
-//					return result;
-//				}
-//			}
-//
-//			throw "could not generate short name for \"" + std::int64_tFullName + "\"";
-//		}
-//
-//		return new ShortName(std::int64_tName, shortExt);
-        return ShortName("");
-	}
+    ShortName generateShortName(std::string longFullName) {
+		longFullName = AkaiStrUtil::to_upper_copy(stripLeadingPeriods(longFullName));
+		std::string longName;
+		std::string longExt;
+		auto dotIdx = longFullName.find_last_of('.');
+		bool forceSuffix;
+
+		if (dotIdx == -1) {
+			forceSuffix = !cleanString(longFullName);
+			longName = tidyString(longFullName);
+			longExt = "";
+		} else {
+			forceSuffix = !cleanString(longFullName.substr(0, dotIdx));
+			longName = tidyString(longFullName.substr(0, dotIdx));
+			longExt = tidyString(longFullName.substr(dotIdx + 1));
+		}
+
+		std::string shortExt = (longExt.length() > 3) ? longExt.substr(0, 3) : longExt;
+
+		if (forceSuffix || (longName.length() > 8)
+				|| usedNames.find(AkaiStrUtil::to_lower_copy(ShortName(longName, shortExt).asSimpleString())) != usedNames.end()) {
+
+			int maxLongIdx = std::min((int)longName.length(), 8);
+
+			for (int i = 1; i < 99999; i++) {
+				std::string serial = "~" + std::to_string(i);
+				auto serialLen = serial.length();
+				std::string shortName = longName.substr(0, std::min(maxLongIdx, 8 - (int) serialLen)) + serial;
+
+                ShortName result(shortName, shortExt);
+
+				if (usedNames.find(AkaiStrUtil::to_lower_copy(result.asSimpleString())) == usedNames.end()) {
+					return result;
+				}
+			}
+
+			throw std::invalid_argument("could not generate short name for \"" + longFullName + "\"");
+		}
+
+		return {longName, shortExt};
+    }
+
 
 };
 }

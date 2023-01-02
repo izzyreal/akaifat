@@ -18,7 +18,7 @@ namespace akaifat::fat {
             std::int64_t trueSize = chain->getLengthOnDisk();
 
             if (trueSize > toWrite) {
-                std::int32_t rest = (std::uint32_t) (trueSize - toWrite);
+                auto rest = (std::int32_t) (trueSize - toWrite);
                 ByteBuffer fill(rest);
                 chain->writeData(toWrite, fill);
             }
@@ -43,7 +43,7 @@ namespace akaifat::fat {
 
         ClusterChainDirectory(const std::shared_ptr<ClusterChain>& _chain, bool isRoot)
                 : AbstractDirectory(
-                (std::uint32_t) (_chain->getLengthOnDisk() / 32),
+                (std::int32_t) (_chain->getLengthOnDisk() / 32),
                 _chain->isReadOnly(), isRoot), chain(_chain) {
         }
 

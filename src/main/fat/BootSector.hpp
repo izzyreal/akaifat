@@ -2,6 +2,8 @@
 
 #include "Sector.hpp"
 
+#include <utility>
+
 #include "FatType.hpp"
 
 namespace akaifat::fat {
@@ -16,7 +18,7 @@ namespace akaifat::fat {
         static const std::int32_t EXTENDED_BOOT_SIGNATURE = 0x29;
         static const std::int32_t SIZE = 512;
 
-        static std::shared_ptr<BootSector> read(std::shared_ptr<BlockDevice> device);
+        static std::shared_ptr<BootSector> read(const std::shared_ptr<BlockDevice>& device);
 
         virtual FatType *getFatType() = 0;
 
@@ -220,15 +222,9 @@ namespace akaifat::fat {
             return get32(0x1c);
         }
 
-        void setNrHiddenSectors(std::int64_t v) {
-            if (v == getNrHiddenSectors()) return;
-
-//            set32(0x1c, v);
-        }
-
     protected:
         explicit BootSector(std::shared_ptr<BlockDevice> device)
-                : Sector(device, 0, SIZE) {
+                : Sector(std::move(device), 0, SIZE) {
             markDirty();
         }
 

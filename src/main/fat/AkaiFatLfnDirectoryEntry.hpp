@@ -27,7 +27,7 @@ namespace akaifat::fat {
             return result;
         }
 
-        static std::shared_ptr<FatDirectoryEntry> createPart(std::string subName,
+        static std::shared_ptr<FatDirectoryEntry> createPart(const std::string& subName,
                 std::int32_t ordinal, char checkSum, bool isLast) {
                 
             char unicodechar[13];
@@ -57,7 +57,7 @@ namespace akaifat::fat {
             LittleEndian::setInt16(rawData, 7, static_cast<unsigned char>(unicodechar[3]));
             LittleEndian::setInt16(rawData, 9, static_cast<unsigned char>(unicodechar[4]));
             LittleEndian::setInt8(rawData, 11, static_cast<unsigned char>(0x0f)); // this is the hidden
-                                                      // attribute tag for lfn
+                                                                                  // attribute tag for lfn
             LittleEndian::setInt8(rawData, 12, 0); // reserved
             LittleEndian::setInt8(rawData, 13, static_cast<unsigned char>(checkSum & 0xff)); // checksum
             LittleEndian::setInt16(rawData, 14, static_cast<unsigned char>(unicodechar[5]));
@@ -75,7 +75,7 @@ namespace akaifat::fat {
         
     public:
         AkaiFatLfnDirectoryEntry(const std::string &name, std::shared_ptr<AkaiFatLfnDirectory> akaiFatLfnDirectory, bool directory)
-                : AbstractFsObject(false), parent(akaiFatLfnDirectory), fileName(name) {
+                : AbstractFsObject(false), parent(std::move(akaiFatLfnDirectory)), fileName(name) {
             realEntry = FatDirectoryEntry::create(directory);
             realEntry->setAkaiName(name);
         }
@@ -84,13 +84,13 @@ namespace akaifat::fat {
 
         bool isReadOnly() override { return AbstractFsObject::isReadOnly(); }
 
-        AkaiFatLfnDirectoryEntry(std::shared_ptr<AkaiFatLfnDirectory> akaiFatLfnDirectory, std::shared_ptr<FatDirectoryEntry> _realEntry,
+        AkaiFatLfnDirectoryEntry(const std::shared_ptr<AkaiFatLfnDirectory>& akaiFatLfnDirectory, std::shared_ptr<FatDirectoryEntry> _realEntry,
                                  std::string _fileName)
                 : AbstractFsObject(akaiFatLfnDirectory->isReadOnly()), parent(akaiFatLfnDirectory),
                   fileName(std::move(_fileName)), realEntry(std::move(_realEntry)) {
         }
 
-        static std::shared_ptr<AkaiFatLfnDirectoryEntry> extract(std::shared_ptr<AkaiFatLfnDirectory> dir, std::int32_t offset, std::int32_t len) {
+        static std::shared_ptr<AkaiFatLfnDirectoryEntry> extract(const std::shared_ptr<AkaiFatLfnDirectory>& dir, std::int32_t offset, std::int32_t len) {
             auto realEntry = dir->dir->getEntry(offset + len - 1);
             std::string fileName;
             
@@ -209,7 +209,7 @@ namespace akaifat::fat {
             parent->linkEntry(unlinkedEntryRef);
         }
 
-        void moveTo(std::shared_ptr<AkaiFatLfnDirectory> target, std::string newName) {
+        void moveTo(const std::shared_ptr<AkaiFatLfnDirectory>& target, std::string newName) {
 
             checkWritable();
 
@@ -266,7 +266,7 @@ namespace akaifat::fat {
                 return result;
             }
             
-            const size_t entrySize = static_cast<size_t>(totalEntrySize());
+            const auto entrySize = static_cast<size_t>(totalEntrySize());
             
             result.resize(entrySize);
             
