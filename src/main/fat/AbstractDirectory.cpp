@@ -5,7 +5,7 @@
 
 using namespace akaifat::fat;
 
-AbstractDirectory::AbstractDirectory(int _capacity, bool _readOnly, bool _root)
+AbstractDirectory::AbstractDirectory(std::int32_t _capacity, bool _readOnly, bool _root)
         : capacity(_capacity), readOnly(_readOnly), _isRoot(_root) {
 }
 
@@ -16,13 +16,13 @@ void AbstractDirectory::setEntries(std::vector<std::shared_ptr<FatDirectoryEntry
     entries = newEntries;
 }
 
-void AbstractDirectory::sizeChanged(long newSize) {
-    long newCount = newSize / FatDirectoryEntry::SIZE;
+void AbstractDirectory::sizeChanged(std::int64_t newSize) {
+    std::int64_t newCount = newSize / FatDirectoryEntry::SIZE;
 
     if (newCount > INT_MAX)
         throw std::runtime_error("directory too large");
 
-    capacity = (int) newCount;
+    capacity = (std::uint32_t) newCount;
 }
 
 void AbstractDirectory::read() {
@@ -31,7 +31,7 @@ void AbstractDirectory::read() {
     read(data);
     data.flip();
 
-    for (int i = 0; i < capacity; i++) {
+    for (std::int32_t i = 0; i < capacity; i++) {
         auto e = FatDirectoryEntry::read(data, readOnly);
 
         if (e == nullptr) continue;
@@ -47,7 +47,7 @@ void AbstractDirectory::read() {
     }
 }
 
-std::shared_ptr<FatDirectoryEntry> AbstractDirectory::getEntry(int idx) {
+std::shared_ptr<FatDirectoryEntry> AbstractDirectory::getEntry(std::int32_t idx) {
     return entries[idx];
 }
 
@@ -56,7 +56,7 @@ int AbstractDirectory::getCapacity() const {
 }
 
 int AbstractDirectory::getEntryCount() {
-    return (int) entries.size();
+    return (std::uint32_t) entries.size();
 }
 
 bool AbstractDirectory::isRoot() const {
@@ -64,7 +64,7 @@ bool AbstractDirectory::isRoot() const {
 }
 
 int AbstractDirectory::getSize() {
-    return (int) entries.size() + ((volumeLabel.length() != 0) ? 1 : 0);
+    return (std::uint32_t) entries.size() + ((volumeLabel.length() != 0) ? 1 : 0);
 }
 
 void AbstractDirectory::flush() {
@@ -146,7 +146,7 @@ void AbstractDirectory::setLabel(std::string &label) {
     checkRoot();
 
     if (label.length() > MAX_LABEL_LENGTH)
-        throw std::runtime_error("label too long");
+        throw std::runtime_error("label too std::int64_t");
 
     volumeLabel = label;
 }

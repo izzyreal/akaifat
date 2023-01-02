@@ -194,8 +194,8 @@ void AkaiFatLfnDirectory::checkUniqueName(std::string &name) {
 }
 
 void AkaiFatLfnDirectory::parseLfn() {
-    int i = 0;
-    int size = dir->getEntryCount();
+    std::int32_t i = 0;
+    std::int32_t size = dir->getEntryCount();
 
     while (i < size) {
         while (i < size &&
@@ -207,7 +207,7 @@ void AkaiFatLfnDirectory::parseLfn() {
             break;
         }
 
-        int offset = i;
+        std::int32_t offset = i;
 
         while (dir->getEntry(i)->isLfnEntry()) {
             i++;

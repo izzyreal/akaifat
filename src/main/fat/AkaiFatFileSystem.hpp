@@ -16,19 +16,18 @@ private:
     std::shared_ptr<Fat16BootSector> bs;
     std::shared_ptr<AkaiFatLfnDirectory> rootDir;
     std::shared_ptr<AbstractDirectory> rootDirStore;
-    long filesOffset;
+    std::int64_t filesOffset;
             
 public:
     AkaiFatFileSystem(std::shared_ptr<BlockDevice> device, bool readOnly,
             bool ignoreFatDifferences);
     
     AkaiFatFileSystem(std::shared_ptr<BlockDevice> device, bool readOnly)
-    // Should ignoreFatDifferences be false?
-    : AkaiFatFileSystem (device, readOnly, true) {}
+    : AkaiFatFileSystem(device, readOnly, false) {}
 
     static AkaiFatFileSystem* read(std::shared_ptr<BlockDevice> device, bool readOnly);
 
-    long getFilesOffset();
+    std::int64_t getFilesOffset();
 
     std::string getVolumeLabel();
 
@@ -42,10 +41,10 @@ public:
 
     std::shared_ptr<BootSector> getBootSector();
 
-    long getFreeSpace() override;
+    std::int64_t getFreeSpace() override;
 
-    long getTotalSpace() override;
+    std::int64_t getTotalSpace() override;
 
-    long getUsableSpace() override;
+    std::int64_t getUsableSpace() override;
 };
 }

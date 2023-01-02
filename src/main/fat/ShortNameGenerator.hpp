@@ -11,7 +11,7 @@ private:
 	std::string tidyString(std::string& dirty) {
 //		std::stringBuilder result = new std::stringBuilder();
 //
-//		for (int src = 0; src < dirty.length(); src++) {
+//		for (std::int32_t src = 0; src < dirty.length(); src++) {
 //			char toTest = Character.toUpperCase(dirty.charAt(src));
 //			if (isSkipChar(toTest)) continue;
 //
@@ -27,7 +27,7 @@ private:
 	}
 
 	bool cleanString(std::string s) {
-//		for (int i = 0; i < s.length(); i++) {
+//		for (std::int32_t i = 0; i < s.length(); i++) {
 //			if (isSkipChar(s.charAt(i))) return false;
 //			if (!validChar(s.charAt(i))) return false;
 //		}
@@ -38,7 +38,7 @@ private:
 	std::string stripLeadingPeriods(std::string str) {
 //		std::stringBuilder sb = new std::stringBuilder(str.length());
 //
-//		for (int i = 0; i < str.length(); i++) {
+//		for (std::int32_t i = 0; i < str.length(); i++) {
 //			if (str.charAt(i) != '.') { // NOI18N
 //				sb.append(str.substring(i));
 //				break;
@@ -68,35 +68,35 @@ public:
 		return (c == '.') || (c == ' ');
 	}
 
-	ShortName generateShortName(std::string longFullName) {
-//		longFullName = stripLeadingPeriods(longFullName).toUpperCase(Locale.ROOT);
+	ShortName generateShortName(std::string std::int64_tFullName) {
+//		std::int64_tFullName = stripLeadingPeriods(std::int64_tFullName).toUpperCase(Locale.ROOT);
 //
-//		std::string longName;
-//		std::string longExt;
-//		int dotIdx = longFullName.lastIndexOf('.');
+//		std::string std::int64_tName;
+//		std::string std::int64_tExt;
+//		int dotIdx = std::int64_tFullName.lastIndexOf('.');
 //		bool forceSuffix;
 //
 //		if (dotIdx == -1) {
-//			forceSuffix = !cleanString(longFullName);
-//			longName = tidystd::string(longFullName);
-//			longExt = "";
+//			forceSuffix = !cleanString(std::int64_tFullName);
+//			std::int64_tName = tidystd::string(std::int64_tFullName);
+//			std::int64_tExt = "";
 //		} else {
-//			forceSuffix = !cleanString(longFullName.substring(0, dotIdx));
-//			longName = tidystd::string(longFullName.substring(0, dotIdx));
-//			longExt = tidystd::string(longFullName.substring(dotIdx + 1));
+//			forceSuffix = !cleanString(std::int64_tFullName.substring(0, dotIdx));
+//			std::int64_tName = tidystd::string(std::int64_tFullName.substring(0, dotIdx));
+//			std::int64_tExt = tidystd::string(std::int64_tFullName.substring(dotIdx + 1));
 //		}
 //
-//		std::string shortExt = (longExt.length() > 3) ? longExt.substring(0, 3) : longExt;
+//		std::string shortExt = (std::int64_tExt.length() > 3) ? std::int64_tExt.substring(0, 3) : std::int64_tExt;
 //
-//		if (forceSuffix || (longName.length() > 8)
-//				|| usedNames.contains(new ShortName(longName, shortExt).asSimpleString().toLowerCase(Locale.ROOT))) {
+//		if (forceSuffix || (std::int64_tName.length() > 8)
+//				|| usedNames.contains(new ShortName(std::int64_tName, shortExt).asSimpleString().toLowerCase(Locale.ROOT))) {
 //
-//			int maxLongIdx = Math.min(longName.length(), 8);
+//			int maxLongIdx = Math.min(std::int64_tName.length(), 8);
 //
-//			for (int i = 1; i < 99999; i++) {
+//			for (std::int32_t i = 1; i < 99999; i++) {
 //				std::string serial = "~" + i; // NOI18N
 //				int serialLen = serial.length();
-//				std::string shortName = longName.substring(0, Math.min(maxLongIdx, 8 - serialLen)) + serial;
+//				std::string shortName = std::int64_tName.substring(0, Math.min(maxLongIdx, 8 - serialLen)) + serial;
 //				ShortName result = new ShortName(shortName, shortExt);
 //
 //				if (!usedNames.contains(result.asSimpleString().toLowerCase(Locale.ROOT))) {
@@ -105,10 +105,10 @@ public:
 //				}
 //			}
 //
-//			throw "could not generate short name for \"" + longFullName + "\"";
+//			throw "could not generate short name for \"" + std::int64_tFullName + "\"";
 //		}
 //
-//		return new ShortName(longName, shortExt);
+//		return new ShortName(std::int64_tName, shortExt);
         return ShortName("");
 	}
 

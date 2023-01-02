@@ -90,7 +90,7 @@ foreach(_source IN ITEMS ${_source_list_test})
     source_group("${_source_path_msvc}" FILES "${_source}")
 endforeach()
 
-add_executable(akaifat-tests ${_source_list_test})
+add_executable(akaifat-tests ${_source_list_test} src/test/FatTests.cpp)
 
 if (UNIX AND NOT APPLE)
     set(THREADS_PREFER_PTHREAD_FLAG ON)

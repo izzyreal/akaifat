@@ -6,7 +6,7 @@ namespace akaifat::fat {
     class Fat16RootDirectory : public AbstractDirectory {
     private:
         std::shared_ptr<BlockDevice> device;
-        long deviceOffset;
+        std::int64_t deviceOffset;
 
     protected:
         void read(ByteBuffer &data) override {
@@ -20,11 +20,11 @@ namespace akaifat::fat {
         }
 
 
-        long getStorageCluster() override {
+        std::int64_t getStorageCluster() override {
             return 0;
         }
 
-        void changeSize(int entryCount) override {
+        void changeSize(std::int32_t entryCount) override {
             if (getCapacity() < entryCount) {
                 throw std::runtime_error("directory full");
             }

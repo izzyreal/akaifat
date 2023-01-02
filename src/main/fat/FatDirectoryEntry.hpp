@@ -18,14 +18,14 @@ namespace akaifat::fat {
 
     private:
         bool dirty{};
-        static const int OFFSET_ATTRIBUTES = 0x0b;
-        static const int OFFSET_FILE_SIZE = 0x1c;
-        static const int F_READONLY = 0x01;
-        static const int F_HIDDEN = 0x02;
-        static const int F_SYSTEM = 0x04;
-        static const int F_VOLUME_ID = 0x08;
-        static const int F_DIRECTORY = 0x10;
-        static const int F_ARCHIVE = 0x20;
+        static const std::int32_t OFFSET_ATTRIBUTES = 0x0b;
+        static const std::int32_t OFFSET_FILE_SIZE = 0x1c;
+        static const std::int32_t F_READONLY = 0x01;
+        static const std::int32_t F_HIDDEN = 0x02;
+        static const std::int32_t F_SYSTEM = 0x04;
+        static const std::int32_t F_VOLUME_ID = 0x08;
+        static const std::int32_t F_DIRECTORY = 0x10;
+        static const std::int32_t F_ARCHIVE = 0x20;
 
     public:
         explicit FatDirectoryEntry()
@@ -36,8 +36,8 @@ namespace akaifat::fat {
                 : AbstractFsObject(readOnly), data(std::move(_data)) {
         }
 
-        void setFlag(int mask, bool set) {
-            int oldFlags = getFlags();
+        void setFlag(std::int32_t mask, bool set) {
+            std::int32_t oldFlags = getFlags();
 
             if (((oldFlags & mask) != 0) == set) return;
 
@@ -50,18 +50,18 @@ namespace akaifat::fat {
             dirty = true;
         }
 
-        int getFlags() {
+        std::int32_t getFlags() {
             return LittleEndian::getUInt8(data, OFFSET_ATTRIBUTES);
         }
 
-        void setFlags(int flags) {
+        void setFlags(std::int32_t flags) {
             LittleEndian::setInt8(data, OFFSET_ATTRIBUTES, flags);
         }
 
         std::vector<char> data;
 
-        static int const SIZE = 32;
-        static int const ENTRY_DELETED_MAGIC = 0xe5;
+        static std::int32_t const SIZE = 32;
+        static std::int32_t const ENTRY_DELETED_MAGIC = 0xe5;
 
         static std::shared_ptr<FatDirectoryEntry> read(ByteBuffer &buff, bool readOnly) {
 
@@ -76,7 +76,7 @@ namespace akaifat::fat {
         }
 
         static void writeNullEntry(ByteBuffer &buff) {
-            for (int i = 0; i < SIZE; i++) {
+            for (std::int32_t i = 0; i < SIZE; i++) {
                 buff.put((char) 0);
             }
         }
@@ -147,7 +147,7 @@ namespace akaifat::fat {
 
             std::vector<char> data(SIZE);
 
-            for (int i = 0; i < volumeLabel.length(); i++)
+            for (std::int32_t i = 0; i < volumeLabel.length(); i++)
                 data[i] = volumeLabel[i];
 
             auto result = std::make_shared<FatDirectoryEntry>(data, false);
@@ -161,7 +161,7 @@ namespace akaifat::fat {
 
             std::string result;
 
-            for (int i = 0; i < AbstractDirectory::MAX_LABEL_LENGTH; i++) {
+            for (std::int32_t i = 0; i < AbstractDirectory::MAX_LABEL_LENGTH; i++) {
                 auto b = data[i];
 
                 if (b != 0) {
@@ -178,11 +178,11 @@ namespace akaifat::fat {
             return (LittleEndian::getUInt8(data, 0) == ENTRY_DELETED_MAGIC);
         }
 
-        long getLength() {
+        std::int64_t getLength() {
             return LittleEndian::getUInt32(data, OFFSET_FILE_SIZE);
         }
 
-        void setLength(long length) {
+        void setLength(std::int64_t length) {
             LittleEndian::setInt32(data, OFFSET_FILE_SIZE, length);
         }
 
@@ -205,15 +205,15 @@ namespace akaifat::fat {
 
         void setAkaiName(std::string s);
 
-        long getStartCluster() {
+        std::int64_t getStartCluster() {
             return LittleEndian::getUInt16(data, 0x1a);
         }
 
-        void setStartCluster(long startCluster) {
+        void setStartCluster(std::int64_t startCluster) {
             if (startCluster > INT_MAX)
                 throw std::runtime_error("startCluster too big");
 
-            LittleEndian::setInt16(data, 0x1a, (int) startCluster);
+            LittleEndian::setInt16(data, 0x1a, (std::uint32_t) startCluster);
         }
 
         void write(ByteBuffer &buff) {
@@ -242,7 +242,7 @@ namespace akaifat::fat {
                 unicodechar[11] = (char) LittleEndian::getUInt16(data, 28) & 0xff;
                 unicodechar[12] = (char) LittleEndian::getUInt16(data, 30) & 0xff;
 
-                int end = 0;
+                std::int32_t end = 0;
 
                 while ((end < 13) && (unicodechar[end] != '\0')) {
                     end++;

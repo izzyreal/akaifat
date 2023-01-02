@@ -27,13 +27,13 @@ namespace akaifat::fat {
         checkValidExt(ext);
 
             std::vector<char> result(11);
-            for (int i = 0; i < 11; i++)
+            for (std::int32_t i = 0; i < 11; i++)
                 result[i] = ASCII_SPACE;
 
-            for (int i = 0; i < name.length(); i++)
+            for (std::int32_t i = 0; i < name.length(); i++)
                 result[i] = name[i];
 
-            for (int i = 8; i < 8 + ext.length(); i++)
+            for (std::int32_t i = 8; i < 8 + ext.length(); i++)
                 result[i] = ext[i - 8];
 
             return result;
@@ -48,7 +48,7 @@ namespace akaifat::fat {
         }
 
         static void checkString(std::string &str, const std::string& strType,
-                                int minLength, int maxLength) {
+                                std::int32_t minLength, std::int32_t maxLength) {
 
             if (str.length() < minLength)
                 throw std::runtime_error(strType +
@@ -64,7 +64,7 @@ namespace akaifat::fat {
         ShortName() = default;
 
         explicit ShortName(std::string &nameExt) {
-            if (nameExt.length() > 12) throw std::runtime_error("name too long");
+            if (nameExt.length() > 12) throw std::runtime_error("name too std::int64_t");
 
             auto i = nameExt.find_last_of('.');
 
@@ -115,7 +115,7 @@ namespace akaifat::fat {
         static ShortName parse(std::vector<char> &data) {
             std::string name;
 
-            for (int i = 0; i < 8; i++)
+            for (std::int32_t i = 0; i < 8; i++)
                 name.push_back((char) LittleEndian::getUInt8(data, i));
 
             if (LittleEndian::getUInt8(data, 0) == 0x05) {
@@ -124,7 +124,7 @@ namespace akaifat::fat {
 
             std::string ext;
 
-            for (int i = 0; i < 3; i++)
+            for (std::int32_t i = 0; i < 3; i++)
                 ext.push_back((char) LittleEndian::getUInt8(data, 0x08 + i));
 
             AkaiStrUtil::trim(name, " ");
@@ -134,14 +134,14 @@ namespace akaifat::fat {
         }
 
         void write(std::vector<char> &dest) {
-            for (int i = 0; i < nameBytes.size(); i++)
+            for (std::int32_t i = 0; i < nameBytes.size(); i++)
                 dest[i] = nameBytes[i];
         }
 
         std::string asSimpleString() {
             std::string name;
 
-            for (int i = 0; i < 8; i++) {
+            for (std::int32_t i = 0; i < 8; i++) {
                 char c = (char) LittleEndian::getUInt8(nameBytes, i);
                 if (c == 0x00) continue;
                 name.push_back(c);
@@ -153,7 +153,7 @@ namespace akaifat::fat {
 
             std::string ext;
 
-            for (int i = 0; i < 3; i++) {
+            for (std::int32_t i = 0; i < 3; i++) {
                 char c = (char) LittleEndian::getUInt8(nameBytes, 0x08 + i);
                 if (c == 0x00) continue;
                 ext.push_back(c);
@@ -169,7 +169,7 @@ namespace akaifat::fat {
 
             if (chars[0] == 0x20) throw std::runtime_error("0x20 can not be the first character");
 
-            for (int i = 0; i < chars.size(); i++) {
+            for (std::int32_t i = 0; i < chars.size(); i++) {
                 if ((chars[i] & 0xff) != chars[i])
                     throw std::runtime_error("multi-byte character at " + std::to_string(i));
 

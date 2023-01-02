@@ -7,77 +7,77 @@
 namespace akaifat::fat {
     class BootSector : public Sector {
     public:
-        static const int FAT_COUNT_OFFSET = 16;
-        static const int RESERVED_SECTORS_OFFSET = 14;
-        static const int TOTAL_SECTORS_16_OFFSET = 19;
-        static const int TOTAL_SECTORS_32_OFFSET = 32;
-        static const int FILE_SYSTEM_TYPE_LENGTH = 8;
-        static const int SECTORS_PER_CLUSTER_OFFSET = 0x0d;
-        static const int EXTENDED_BOOT_SIGNATURE = 0x29;
-        static const int SIZE = 512;
+        static const std::int32_t FAT_COUNT_OFFSET = 16;
+        static const std::int32_t RESERVED_SECTORS_OFFSET = 14;
+        static const std::int32_t TOTAL_SECTORS_16_OFFSET = 19;
+        static const std::int32_t TOTAL_SECTORS_32_OFFSET = 32;
+        static const std::int32_t FILE_SYSTEM_TYPE_LENGTH = 8;
+        static const std::int32_t SECTORS_PER_CLUSTER_OFFSET = 0x0d;
+        static const std::int32_t EXTENDED_BOOT_SIGNATURE = 0x29;
+        static const std::int32_t SIZE = 512;
 
         static std::shared_ptr<BootSector> read(std::shared_ptr<BlockDevice> device);
 
         virtual FatType *getFatType() = 0;
 
-        virtual long getSectorsPerFat() = 0;
+        virtual std::int64_t getSectorsPerFat() = 0;
 
-        virtual void setSectorsPerFat(long v) = 0;
+        virtual void setSectorsPerFat(std::int64_t v) = 0;
 
-        virtual void setSectorCount(long count) = 0;
+        virtual void setSectorCount(std::int64_t count) = 0;
 
-        virtual int getRootDirEntryCount() = 0;
+        virtual std::int32_t getRootDirEntryCount() = 0;
 
-        virtual long getSectorCount() = 0;
+        virtual std::int64_t getSectorCount() = 0;
 
-        int getBytesPerSector() {
+        std::int32_t getBytesPerSector() {
             return get16(0x0b);
         }
 
-        int getNrReservedSectors() {
+        std::int32_t getNrReservedSectors() {
             return get16(RESERVED_SECTORS_OFFSET);
         }
 
-        long getFatOffset(int fatNr) {
-            long sectSize = getBytesPerSector();
-            long sectsPerFat = getSectorsPerFat();
-            long resSects = getNrReservedSectors();
+        std::int64_t getFatOffset(std::int32_t fatNr) {
+            std::int64_t sectSize = getBytesPerSector();
+            std::int64_t sectsPerFat = getSectorsPerFat();
+            std::int64_t resSects = getNrReservedSectors();
 
-            long offset = resSects * sectSize;
-            long fatSize = sectsPerFat * sectSize;
+            std::int64_t offset = resSects * sectSize;
+            std::int64_t fatSize = sectsPerFat * sectSize;
 
             offset += fatNr * fatSize;
 
             return offset;
         }
 
-        int getNrFats() {
+        std::int32_t getNrFats() {
             return get8(FAT_COUNT_OFFSET);
         }
 
-        long getRootDirOffset() {
-            long sectSize = getBytesPerSector();
-            long sectsPerFat = getSectorsPerFat();
-            int fats = getNrFats();
+        std::int64_t getRootDirOffset() {
+            std::int64_t sectSize = getBytesPerSector();
+            std::int64_t sectsPerFat = getSectorsPerFat();
+            std::int32_t fats = getNrFats();
 
-            long offset = getFatOffset(0);
+            std::int64_t offset = getFatOffset(0);
 
             offset += fats * sectsPerFat * sectSize;
 
             return offset;
         }
 
-        long getFilesOffset() {
-            long offset = getRootDirOffset();
+        std::int64_t getFilesOffset() {
+            std::int64_t offset = getRootDirOffset();
 
             offset += getRootDirEntryCount() * 32l;
 
             return offset;
         }
 
-        virtual int getFileSystemTypeLabelOffset() = 0;
+        virtual std::int32_t getFileSystemTypeLabelOffset() = 0;
 
-        virtual int getExtendedBootSignatureOffset() = 0;
+        virtual std::int32_t getExtendedBootSignatureOffset() = 0;
 
         virtual void init() {
             setBytesPerSector(getDevice()->getSectorSize());
@@ -94,7 +94,7 @@ namespace akaifat::fat {
         std::string getFileSystemTypeLabel() {
             std::string result;
 
-            for (int i = 0; i < FILE_SYSTEM_TYPE_LENGTH; i++) {
+            for (std::int32_t i = 0; i < FILE_SYSTEM_TYPE_LENGTH; i++) {
                 result += ((char) get8(getFileSystemTypeLabelOffset() + i));
             }
 
@@ -107,20 +107,20 @@ namespace akaifat::fat {
                 throw std::runtime_error("invalid file system type length");
             }
 
-            for (int i = 0; i < FILE_SYSTEM_TYPE_LENGTH; i++) {
+            for (std::int32_t i = 0; i < FILE_SYSTEM_TYPE_LENGTH; i++) {
                 set8(getFileSystemTypeLabelOffset() + i, fsType[i]);
             }
         }
 
-        long getDataClusterCount() {
+        std::int64_t getDataClusterCount() {
             return getDataSize() / getBytesPerCluster();
         }
 
         std::string getOemName() {
             std::string result;
 
-            for (int i = 0; i < 8; i++) {
-                int v = get8(0x3 + i);
+            for (std::int32_t i = 0; i < 8; i++) {
+                std::int32_t v = get8(0x3 + i);
                 if (v == 0) break;
                 result += (char) v;
             }
@@ -132,7 +132,7 @@ namespace akaifat::fat {
             if (name.length() > 8)
                 throw std::runtime_error("only 8 characters are allowed");
 
-            for (int i = 0; i < 8; i++) {
+            for (std::int32_t i = 0; i < 8; i++) {
                 char ch;
                 if (i < name.length()) {
                     ch = name[i];
@@ -144,7 +144,7 @@ namespace akaifat::fat {
             }
         }
 
-        void setBytesPerSector(int v) {
+        void setBytesPerSector(std::int32_t v) {
             if (v == getBytesPerSector()) return;
 
             switch (v) {
@@ -160,67 +160,67 @@ namespace akaifat::fat {
             }
         }
 
-        int getBytesPerCluster() {
+        std::int32_t getBytesPerCluster() {
             return getSectorsPerCluster() * getBytesPerSector();
         }
 
-        int getSectorsPerCluster() {
+        std::int32_t getSectorsPerCluster() {
             return get8(SECTORS_PER_CLUSTER_OFFSET);
         }
 
-        void setSectorsPerCluster(int v) {
+        void setSectorsPerCluster(std::int32_t v) {
             if (v == getSectorsPerCluster()) return;
             if (!isPowerOfTwo(v)) throw std::runtime_error("value must be a power of two");
 
             set8(SECTORS_PER_CLUSTER_OFFSET, v);
         }
 
-        void setNrReservedSectors(int v) {
+        void setNrReservedSectors(std::int32_t v) {
             if (v == getNrReservedSectors()) return;
             if (v < 1) throw std::runtime_error("there must be >= 1 reserved sectors");
             set16(RESERVED_SECTORS_OFFSET, v);
         }
 
-        void setNrFats(int v) {
+        void setNrFats(std::int32_t v) {
             if (v == getNrFats()) return;
 
             set8(FAT_COUNT_OFFSET, v);
         }
 
-        int getMediumDescriptor() {
+        std::int32_t getMediumDescriptor() {
             return get8(0x15);
         }
 
-        void setMediumDescriptor(int v) {
+        void setMediumDescriptor(std::int32_t v) {
             set8(0x15, v);
         }
 
-        int getSectorsPerTrack() {
+        std::int32_t getSectorsPerTrack() {
             return get16(0x18);
         }
 
 
-        void setSectorsPerTrack(int v) {
+        void setSectorsPerTrack(std::int32_t v) {
             if (v == getSectorsPerTrack()) return;
 
             set16(0x18, v);
         }
 
-        int getNrHeads() {
+        std::int32_t getNrHeads() {
             return get16(0x1a);
         }
 
-        void setNrHeads(int v) {
+        void setNrHeads(std::int32_t v) {
             if (v == getNrHeads()) return;
 
             set16(0x1a, v);
         }
 
-        long getNrHiddenSectors() {
+        std::int64_t getNrHiddenSectors() {
             return get32(0x1c);
         }
 
-        void setNrHiddenSectors(long v) {
+        void setNrHiddenSectors(std::int64_t v) {
             if (v == getNrHiddenSectors()) return;
 
 //            set32(0x1c, v);
@@ -232,30 +232,30 @@ namespace akaifat::fat {
             markDirty();
         }
 
-        int getNrLogicalSectors() {
+        std::int32_t getNrLogicalSectors() {
             return get16(TOTAL_SECTORS_16_OFFSET);
         }
 
-        void setNrLogicalSectors(int v) {
+        void setNrLogicalSectors(std::int32_t v) {
             if (v == getNrLogicalSectors()) return;
 
             set16(TOTAL_SECTORS_16_OFFSET, v);
         }
 
-        void setNrTotalSectors(long v) {
+        void setNrTotalSectors(std::int64_t v) {
             set32(TOTAL_SECTORS_32_OFFSET, v);
         }
 
-        long getNrTotalSectors() {
+        std::int64_t getNrTotalSectors() {
             return get32(TOTAL_SECTORS_32_OFFSET);
         }
 
     private:
-        static bool isPowerOfTwo(int n) {
+        static bool isPowerOfTwo(std::int32_t n) {
             return ((n != 0) && (n & (n - 1)) == 0);
         }
 
-        long getDataSize() {
+        std::int64_t getDataSize() {
             return (getSectorCount() * getBytesPerSector()) - getFilesOffset();
         }
     };

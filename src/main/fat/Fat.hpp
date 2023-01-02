@@ -9,18 +9,18 @@
 namespace akaifat::fat {
 class Fat {
 private:
-    std::vector<long> entries;
+    std::vector<std::int64_t> entries;
     FatType* fatType;
     std::shared_ptr<BootSector> bs;
-    long offset;
-    int lastClusterIndex;
-    int sectorCount;
-    int sectorSize;
+    std::int64_t offset;
+    std::int32_t lastClusterIndex;
+    std::int32_t sectorCount;
+    std::int32_t sectorSize;
     std::shared_ptr<BlockDevice> device;
     
-    int lastAllocatedCluster;
+    std::int32_t lastAllocatedCluster;
 
-    void init(int mediumDescriptor) {
+    void init(std::int32_t mediumDescriptor) {
         entries[0] =
                 (mediumDescriptor & 0xFF) |
                 (0xFFFFF00L & fatType->getBitMask());
@@ -31,14 +31,14 @@ private:
         ByteBuffer bb(sectorCount * sectorSize);
         device->read(offset, bb);
 
-        for (int i = 0; i < entries.size(); i++)
+        for (std::int32_t i = 0; i < entries.size(); i++)
             entries[i] = fatType->readEntry(bb.getBuffer(), i);
     }
     
 public:
-    static const int FIRST_CLUSTER = 2;
+    static const std::int32_t FIRST_CLUSTER = 2;
 
-    Fat(std::shared_ptr<BootSector> _bs, long _offset)
+    Fat(std::shared_ptr<BootSector> _bs, std::int64_t _offset)
             : bs (std::move(_bs)), offset (_offset)
     {
         device = bs->getDevice();
@@ -55,7 +55,7 @@ public:
             throw std::runtime_error("boot sector says there are " + std::to_string(bs->getBytesPerSector()) +
                                      " bytes per sector");
 
-        sectorCount = (int) bs->getSectorsPerFat();
+        sectorCount = (std::uint32_t) bs->getSectorsPerFat();
         sectorSize = bs->getBytesPerSector();
         lastAllocatedCluster = FIRST_CLUSTER;
 
@@ -65,9 +65,9 @@ public:
         if (bs->getDataClusterCount() == 0) throw
                     std::runtime_error("no data clusters");
 
-        lastClusterIndex = (int) bs->getDataClusterCount() + FIRST_CLUSTER;
+        lastClusterIndex = (std::uint32_t) bs->getDataClusterCount() + FIRST_CLUSTER;
 
-        entries = std::vector<long>((sectorCount * sectorSize) /
+        entries = std::vector<std::int64_t>((sectorCount * sectorSize) /
                                     fatType->getEntrySize());
 
         if (lastClusterIndex > entries.size())
@@ -75,27 +75,27 @@ public:
                                      " clusters but only " + std::to_string(entries.size()) + " FAT entries");
     }
 
-    static std::shared_ptr<Fat> read(std::shared_ptr<BootSector> bs, int fatNr) {
+    static std::shared_ptr<Fat> read(std::shared_ptr<BootSector> bs, std::int32_t fatNr) {
         
         if (fatNr > bs->getNrFats()) {
             throw std::runtime_error("boot sector says there are only " + std::to_string(bs->getNrFats()) +
                     " FATs when reading FAT #" + std::to_string(fatNr));
         }
         
-        long fatOffset = bs->getFatOffset(fatNr);
+        std::int64_t fatOffset = bs->getFatOffset(fatNr);
         auto result = std::make_shared<Fat>(bs, fatOffset);
         result->read();
         return result;
     }
     
-    static std::shared_ptr<Fat> create(std::shared_ptr<BootSector> bs, int fatNr) {
+    static std::shared_ptr<Fat> create(std::shared_ptr<BootSector> bs, std::int32_t fatNr) {
         
         if (fatNr > bs->getNrFats()) {
             throw std::runtime_error("boot sector says there are only " + std::to_string(bs->getNrFats()) +
                     " FATs when creating FAT #" + std::to_string(fatNr));
         }
         
-        long fatOffset = bs->getFatOffset(fatNr);
+        std::int64_t fatOffset = bs->getFatOffset(fatNr);
         auto result = std::make_shared<Fat>(bs, fatOffset);
 
         if (bs->getDataClusterCount() > result->entries.size())
@@ -122,10 +122,10 @@ public:
         writeCopy(offset);
     }
     
-    void writeCopy(long _offset) {
+    void writeCopy(std::int64_t _offset) {
         std::vector<char> data(sectorCount * sectorSize);
         
-        for (int index = 0; index < entries.size(); index++) {
+        for (std::int32_t index = 0; index < entries.size(); index++) {
             fatType->writeEntry(data, index, entries[index]);
         }
         
@@ -133,42 +133,42 @@ public:
         device->write(_offset, bb);
     }
     
-    int getMediumDescriptor() {
-        return (int) (entries[0] & 0xFF);
+    std::int32_t getMediumDescriptor() {
+        return (std::uint32_t) (entries[0] & 0xFF);
     }
     
-    long getEntry(int index) {
+    std::int64_t getEntry(std::int32_t index) {
         return entries[index];
     }
 
-    int getLastFreeCluster() {
+    std::int32_t getLastFreeCluster() {
         return lastAllocatedCluster;
     }
     
-    std::vector<long> getChain(long startCluster) {
+    std::vector<std::int64_t> getChain(std::int64_t startCluster) {
         testCluster(startCluster);
         // Count the chain first
-        int count = 1;
-        long cluster = startCluster;
-        while (!isEofCluster(entries[(int) cluster])) {
+        std::int32_t count = 1;
+        std::int64_t cluster = startCluster;
+        while (!isEofCluster(entries[(std::uint32_t) cluster])) {
             count++;
-            cluster = entries[(int) cluster];
+            cluster = entries[(std::uint32_t) cluster];
         }
         // Now create the chain
-        std::vector<long> chain(count);
+        std::vector<std::int64_t> chain(count);
         chain[0] = startCluster;
         cluster = startCluster;
-        int i = 0;
-        while (!isEofCluster(entries[(int) cluster])) {
-            cluster = entries[(int) cluster];
+        std::int32_t i = 0;
+        while (!isEofCluster(entries[(std::uint32_t) cluster])) {
+            cluster = entries[(std::uint32_t) cluster];
             chain[++i] = cluster;
         }
         return chain;
     }
 
-    long getNextCluster(long cluster) {
+    std::int64_t getNextCluster(std::int64_t cluster) {
         testCluster(cluster);
-        long entry = entries[(int) cluster];
+        std::int64_t entry = entries[(std::uint32_t) cluster];
         if (isEofCluster(entry)) {
             return -1;
         } else {
@@ -176,10 +176,10 @@ public:
         }
     }
 
-    long allocNew() {
+    std::int64_t allocNew() {
 
-        int i;
-        int entryIndex = -1;
+        std::int32_t i;
+        std::int32_t entryIndex = -1;
 
         for (i = lastAllocatedCluster; i < lastClusterIndex; i++) {
             if (isFreeCluster(i)) {
@@ -210,53 +210,53 @@ public:
         return entryIndex;
     }
     
-    int getFreeClusterCount() {
-        int result = 0;
+    std::int32_t getFreeClusterCount() {
+        std::int32_t result = 0;
 
-        for (int i=FIRST_CLUSTER; i < lastClusterIndex; i++) {
+        for (std::int32_t i=FIRST_CLUSTER; i < lastClusterIndex; i++) {
             if (isFreeCluster(i)) result++;
         }
 
         return result;
     }
 
-    int getLastAllocatedCluster() {
+    std::int32_t getLastAllocatedCluster() {
         return lastAllocatedCluster;
     }
     
-    std::vector<long> allocNew(int nrClusters) {
-        std::vector<long> rc(nrClusters);
+    std::vector<std::int64_t> allocNew(std::int32_t nrClusters) {
+        std::vector<std::int64_t> rc(nrClusters);
         
         rc[0] = allocNew();
-        for (int i = 1; i < nrClusters; i++) {
+        for (std::int32_t i = 1; i < nrClusters; i++) {
             rc[i] = allocAppend(rc[i - 1]);
         }
         
         return rc;
     }
     
-    long allocAppend(long cluster) {
+    std::int64_t allocAppend(std::int64_t cluster) {
         
         testCluster(cluster);
         
-        while (!isEofCluster(entries[(int) cluster])) {
-            cluster = entries[(int) cluster];
+        while (!isEofCluster(entries[(std::uint32_t) cluster])) {
+            cluster = entries[(std::uint32_t) cluster];
         }
         
-        long newCluster = allocNew();
-        entries[(int) cluster] = newCluster;
+        std::int64_t newCluster = allocNew();
+        entries[(std::uint32_t) cluster] = newCluster;
 
         return newCluster;
     }
 
-    void setEof(long cluster) {
+    void setEof(std::int64_t cluster) {
         testCluster(cluster);
-        entries[(int) cluster] = fatType->getEofMarker();
+        entries[(std::uint32_t) cluster] = fatType->getEofMarker();
     }
 
-    void setFree(long cluster) {
+    void setFree(std::int64_t cluster) {
         testCluster(cluster);
-        entries[(int) cluster] = 0;
+        entries[(std::uint32_t) cluster] = 0;
     }
     
     bool equals(const std::shared_ptr<Fat>& other) {
@@ -267,16 +267,24 @@ public:
 
         if (entries.size() != other->entries.size()) return false;
 
-        for (int i = 0; i < entries.size(); i++)
+        for (std::int32_t i = 0; i < entries.size(); i++)
             if (entries[i] != other->entries[i]) return false;
 
         return (getMediumDescriptor() == other->getMediumDescriptor());
     }
     
-    int hashCode() {
-        int hash = 7;
-//        hash = 23 * hash + Arrays.hashCode(entries);
-        hash = 23 * hash + (int) fatType->hashCode();
+    std::int32_t hashCode() {
+        std::int32_t hash = 7;
+
+        std::int32_t entriesHash = 1;
+
+        for (std::int64_t element : entries) {
+            auto elementHash = static_cast<std::int32_t>(element ^ ((std::uint64_t)(element) >> 32));
+            entriesHash = 31 * entriesHash + elementHash;
+        }
+
+        hash = 23 * hash + entriesHash;
+        hash = 23 * hash + fatType->hashCode();
         hash = 23 * hash + sectorCount;
         hash = 23 * hash + sectorSize;
         hash = 23 * hash + lastClusterIndex;
@@ -284,22 +292,22 @@ public:
     }
 
     // Can be protected?
-    void testCluster(long cluster) {
+    void testCluster(std::int64_t cluster) {
         if ((cluster < FIRST_CLUSTER) || (cluster >= entries.size())) {
             throw std::runtime_error("invalid cluster value " + std::to_string(cluster));
         }
     }
 
-    bool isFreeCluster(long entry) {
+    bool isFreeCluster(std::int64_t entry) {
         if (entry > INT_MAX) throw std::runtime_error("entry is bigger than INT_MAX");
-        return (entries[(int) entry] == 0);
+        return (entries[(std::uint32_t) entry] == 0);
     }
     
-    bool isReservedCluster(long entry) {
+    bool isReservedCluster(std::int64_t entry) {
         return fatType->isReservedCluster(entry);
     }
 
-    bool isEofCluster(long entry) {
+    bool isEofCluster(std::int64_t entry) {
         return fatType->isEofCluster(entry);
     }
 

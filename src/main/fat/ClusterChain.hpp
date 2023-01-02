@@ -11,12 +11,12 @@ namespace akaifat::fat {
     private:
         Fat *fat;
         std::shared_ptr<BlockDevice> device;
-        int clusterSize;
-        long dataOffset;
+        std::int32_t clusterSize;
+        std::int64_t dataOffset;
 
-        long startCluster;
+        std::int64_t startCluster;
 
-        long getDevOffset(long cluster, int clusterOffset) {
+        std::int64_t getDevOffset(std::int64_t cluster, std::int32_t clusterOffset) {
             return dataOffset + clusterOffset +
                    ((cluster - Fat::FIRST_CLUSTER) * clusterSize);
         }
@@ -25,7 +25,7 @@ namespace akaifat::fat {
         ClusterChain(Fat *fat, bool readOnly)
                 : ClusterChain(fat, 0, readOnly) {}
 
-        ClusterChain(Fat *_fat, long _startCluster, bool readOnly)
+        ClusterChain(Fat *_fat, std::int64_t _startCluster, bool readOnly)
                 : akaifat::AbstractFsObject(readOnly), fat(_fat) {
             if (_startCluster != 0) {
                 fat->testCluster(_startCluster);
@@ -40,7 +40,7 @@ namespace akaifat::fat {
             clusterSize = fat->getBootSector()->getBytesPerCluster();
         }
 
-        int getClusterSize() {
+        std::int32_t getClusterSize() {
             return clusterSize;
         }
 
@@ -52,33 +52,33 @@ namespace akaifat::fat {
             return device;
         }
 
-        long getStartCluster() {
+        std::int64_t getStartCluster() {
             return startCluster;
         }
 
-        long getLengthOnDisk() {
+        std::int64_t getLengthOnDisk() {
             if (getStartCluster() == 0) return 0;
 
             return getChainLength() * clusterSize;
         }
 
-        long setSize(long size) {
-            long nrClusters = ((size + clusterSize - 1) / clusterSize);
+        std::int64_t setSize(std::int64_t size) {
+            std::int64_t nrClusters = ((size + clusterSize - 1) / clusterSize);
             if (nrClusters > INT_MAX)
                 throw std::runtime_error("too many clusters");
 
-            setChainLength((int) nrClusters);
+            setChainLength((std::uint32_t) nrClusters);
 
             return clusterSize * nrClusters;
         }
 
-        int getChainLength() {
+        std::int32_t getChainLength() {
             if (getStartCluster() == 0) return 0;
             auto chain = getFat()->getChain(getStartCluster());
             return chain.size();
         }
 
-        void setChainLength(int nrClusters) {
+        void setChainLength(std::int32_t nrClusters) {
             if (nrClusters < 0) throw std::runtime_error("negative cluster count");
 
             if ((startCluster == 0) && (nrClusters == 0)) {
@@ -92,7 +92,7 @@ namespace akaifat::fat {
                 if (nrClusters != chain.size()) {
                     if (nrClusters > chain.size()) {
                         /* grow the chain */
-                        int count = nrClusters - chain.size();
+                        std::int32_t count = nrClusters - chain.size();
 
                         while (count > 0) {
                             fat->allocAppend(getStartCluster());
@@ -102,11 +102,11 @@ namespace akaifat::fat {
                         /* shrink the chain */
                         if (nrClusters > 0) {
                             fat->setEof(chain[nrClusters - 1]);
-                            for (int i = nrClusters; i < chain.size(); i++) {
+                            for (std::int32_t i = nrClusters; i < chain.size(); i++) {
                                 fat->setFree(chain[i]);
                             }
                         } else {
-                            for (long i : chain) {
+                            for (std::int64_t i : chain) {
                                 fat->setFree(i);
                             }
 
@@ -117,9 +117,9 @@ namespace akaifat::fat {
             }
         }
 
-        void readData(long offset, ByteBuffer &dest) {
+        void readData(std::int64_t offset, ByteBuffer &dest) {
 
-            int len = (int) dest.remaining();
+            std::int32_t len = (std::uint32_t) dest.remaining();
 
             if (startCluster == 0 && len > 0) {
                 throw std::runtime_error("cannot read from empty cluster chain");
@@ -128,11 +128,11 @@ namespace akaifat::fat {
             auto chain = getFat()->getChain(startCluster);
             auto dev = getDevice();
 
-            int chainIdx = (int) (offset / clusterSize);
+            std::int32_t chainIdx = (std::uint32_t) (offset / clusterSize);
 
             if (offset % clusterSize != 0) {
-                int clusOfs = (int) (offset % clusterSize);
-                int size = std::min<int>(len,  clusterSize - (offset % clusterSize));
+                std::int32_t clusOfs = (std::uint32_t) (offset % clusterSize);
+                std::int32_t size = std::min<int>(len,  clusterSize - (offset % clusterSize));
                 dest.limit(dest.position() + size);
 
                 dev->read(getDevOffset(chain[chainIdx], clusOfs), dest);
@@ -142,7 +142,7 @@ namespace akaifat::fat {
             }
 
             while (len > 0) {
-                int size = std::min<int>(clusterSize, len);
+                std::int32_t size = std::min<int>(clusterSize, len);
                 dest.limit(dest.position() + size);
 
                 dev->read(getDevOffset(chain[chainIdx], 0), dest);
@@ -152,25 +152,25 @@ namespace akaifat::fat {
             }
         }
 
-        void writeData(long offset, ByteBuffer &srcBuf) {
+        void writeData(std::int64_t offset, ByteBuffer &srcBuf) {
 
-            int len = srcBuf.remaining();
+            std::int32_t len = srcBuf.remaining();
 
             if (len == 0) return;
 
-            long minSize = offset + len;
+            std::int64_t minSize = offset + len;
             if (getLengthOnDisk() < minSize) {
                 setSize(minSize);
             }
 
             auto chain = fat->getChain(getStartCluster());
 
-            int chainIdx = (int) (offset / clusterSize);
+            std::int32_t chainIdx = (std::uint32_t) (offset / clusterSize);
 
             if (offset % clusterSize != 0) {
-                int clusOfs = (int) (offset % clusterSize);
-                int size = std::min<int>(len,
-                                    (int) (clusterSize - (offset % clusterSize)));
+                std::int32_t clusOfs = (std::uint32_t) (offset % clusterSize);
+                std::int32_t size = std::min<int>(len,
+                                    (std::uint32_t) (clusterSize - (offset % clusterSize)));
                 srcBuf.limit(srcBuf.position() + size);
 
                 device->write(getDevOffset(chain[chainIdx], clusOfs), srcBuf);
@@ -180,7 +180,7 @@ namespace akaifat::fat {
             }
 
             while (len > 0) {
-                int size = std::min<int>(clusterSize, len);
+                std::int32_t size = std::min<int>(clusterSize, len);
                 srcBuf.limit(srcBuf.position() + size);
 
                 device->write(getDevOffset(chain[chainIdx], 0), srcBuf);

@@ -11,15 +11,15 @@ namespace akaifat {
 class ImageBlockDevice : public BlockDevice {
 private:
     std::fstream& img;
-    long mediaSize = -1;
+    std::int64_t mediaSize = -1;
     
 public:
     explicit ImageBlockDevice(std::fstream& _img) : img (_img) {}
-    explicit ImageBlockDevice(std::fstream& _img, uint64_t _mediaSize) : img (_img), mediaSize (static_cast<long>(_mediaSize)) {}
+    explicit ImageBlockDevice(std::fstream& _img, uint64_t _mediaSize) : img (_img), mediaSize (static_cast<std::int64_t>(_mediaSize)) {}
     
     bool isClosed() override { return false; }
 
-    long getSize() override {
+    std::int64_t getSize() override {
         
         if (mediaSize != -1) {
             return mediaSize;
@@ -33,7 +33,7 @@ public:
         return fsize;
     }
 
-    void read(long devOffset, ByteBuffer& dest) override {
+    void read(std::int64_t devOffset, ByteBuffer& dest) override {
         if (isClosed()) throw std::runtime_error("device closed");
         
         auto toReadTotal = dest.remaining();
@@ -58,7 +58,7 @@ public:
                 std::vector<char>& buf = bb.getBuffer();
                 img.read(&buf[0], toReadWithEndAlignment);
                 bb.flip();
-                for (int i = offsetWithinSector; i < toReadWithStartAlignment; i++)
+                for (std::int32_t i = offsetWithinSector; i < toReadWithStartAlignment; i++)
                     dest.put(buf[i]);
             }
             else
@@ -67,7 +67,7 @@ public:
                 std::vector<char>& buf = bb.getBuffer();
                 img.read(&buf[0], toReadWithStartAlignment);
                 bb.flip();
-                for (int i = offsetWithinSector; i < toReadWithStartAlignment; i++)
+                for (std::int32_t i = offsetWithinSector; i < toReadWithStartAlignment; i++)
                     dest.put(buf[i]);
             }
             return;
@@ -81,7 +81,7 @@ public:
         dest.position(dest.position() + toRead);
     }
 
-    void write(long devOffset, ByteBuffer& src) override {
+    void write(std::int64_t devOffset, ByteBuffer& src) override {
         if (isClosed()) throw std::runtime_error("device closed");
         
         const auto remaining = src.remaining();
@@ -105,7 +105,7 @@ public:
         
         ByteBuffer data(toWrite);
                 
-        for (int i = 0; i < toWrite; i++)
+        for (std::int32_t i = 0; i < toWrite; i++)
         {
             if (i < offsetWithinSector) {
                 data.put(prepend.get());
@@ -125,7 +125,7 @@ public:
         img.flush();
     }
 
-    int getSectorSize() override {
+    std::int32_t getSectorSize() override {
         return 512;
     }
 

@@ -20,7 +20,7 @@ bs (std::dynamic_pointer_cast<Fat16BootSector>(BootSector::read(device)))
     
     if (!ignoreFatDifferences)
     {
-        for (int i=1; i < bs->getNrFats(); i++)
+        for (std::int32_t i=1; i < bs->getNrFats(); i++)
         {
             auto tmpFat = Fat::read(bs, i);
             
@@ -40,7 +40,7 @@ AkaiFatFileSystem* AkaiFatFileSystem::read(std::shared_ptr<BlockDevice> device, 
     return new AkaiFatFileSystem(device, readOnly);
 }
 
-long AkaiFatFileSystem::getFilesOffset()
+std::int64_t AkaiFatFileSystem::getFilesOffset()
 {
     checkClosed();
     
@@ -78,7 +78,7 @@ void AkaiFatFileSystem::flush()
         bs->write();
     }
     
-    for (int i = 0; i < bs->getNrFats(); i++) {
+    for (std::int32_t i = 0; i < bs->getNrFats(); i++) {
         fat->writeCopy(bs->getFatOffset(i));
     }
     
@@ -99,20 +99,20 @@ std::shared_ptr<BootSector> AkaiFatFileSystem::getBootSector()
     return bs;
 }
 
-long AkaiFatFileSystem::getFreeSpace()
+std::int64_t AkaiFatFileSystem::getFreeSpace()
 {
     checkClosed();
     
     return fat->getFreeClusterCount() * bs->getBytesPerCluster();
 }
 
-long AkaiFatFileSystem::getTotalSpace()
+std::int64_t AkaiFatFileSystem::getTotalSpace()
 {
     checkClosed();
     return -1;
 }
 
-long AkaiFatFileSystem::getUsableSpace()
+std::int64_t AkaiFatFileSystem::getUsableSpace()
 {
     checkClosed();
     

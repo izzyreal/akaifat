@@ -16,11 +16,11 @@ public:
     
     virtual bool isClosed() = 0;
 
-    virtual long getTotalSpace() = 0;
+    virtual std::int64_t getTotalSpace() = 0;
 
-    virtual long getFreeSpace() = 0;
+    virtual std::int64_t getFreeSpace() = 0;
 
-    virtual long getUsableSpace() = 0;
+    virtual std::int64_t getUsableSpace() = 0;
 
     virtual void flush() = 0;
 };

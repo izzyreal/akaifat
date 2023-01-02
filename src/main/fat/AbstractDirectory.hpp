@@ -15,19 +15,19 @@ namespace akaifat::fat {
     public:
         virtual ~AbstractDirectory() = default;
 
-        static const int MAX_LABEL_LENGTH = 11;
+        static const std::int32_t MAX_LABEL_LENGTH = 11;
 
         void setEntries(std::vector<std::shared_ptr<FatDirectoryEntry>> &newEntries);
 
-        std::shared_ptr<FatDirectoryEntry> getEntry(int idx);
+        std::shared_ptr<FatDirectoryEntry> getEntry(std::int32_t idx);
 
-        [[nodiscard]] int getCapacity() const;
+        [[nodiscard]] std::int32_t getCapacity() const;
 
-        int getEntryCount();
+        std::int32_t getEntryCount();
 
         [[nodiscard]] bool isRoot() const;
 
-        int getSize();
+        std::int32_t getSize();
 
         void flush();
 
@@ -41,28 +41,28 @@ namespace akaifat::fat {
 
         void setLabel(std::string &label);
 
-        virtual void changeSize(int entryCount) = 0;
+        virtual void changeSize(std::int32_t entryCount) = 0;
 
     private:
         std::vector<std::shared_ptr<FatDirectoryEntry>> entries;
         bool readOnly;
         bool _isRoot;
 
-        int capacity;
+        std::int32_t capacity;
         std::string volumeLabel;
 
         void checkRoot() const;
 
     public:
-        AbstractDirectory(int _capacity, bool _readOnly, bool _root);
+        AbstractDirectory(std::int32_t _capacity, bool _readOnly, bool _root);
 
         virtual void read(ByteBuffer &data) = 0;
 
         virtual void write(ByteBuffer &data) = 0;
 
-        virtual long getStorageCluster() = 0;
+        virtual std::int64_t getStorageCluster() = 0;
 
-        virtual void sizeChanged(long newSize);
+        virtual void sizeChanged(std::int64_t newSize);
 
         virtual void read();
 

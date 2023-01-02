@@ -32,7 +32,7 @@ namespace akaifat::fat {
         
         explicit AkaiPart(std::string akaiPart) {
 
-            if (akaiPart.length() > 8) throw std::runtime_error("Akai part too long");
+            if (akaiPart.length() > 8) throw std::runtime_error("Akai part too std::int64_t");
 
             nameBytes = toCharArray(akaiPart);
 //            checkValidChars(nameBytes);
@@ -45,7 +45,7 @@ namespace akaifat::fat {
         static AkaiPart parse(std::vector<char> &data) {
             std::vector<char> nameArr(8);
 
-            for (int i = 0; i < nameArr.size(); i++) {
+            for (std::int32_t i = 0; i < nameArr.size(); i++) {
                 nameArr[i] = (char) LittleEndian::getUInt8(data, i + 12);
             }
             std::string akaiPart = std::string(begin(nameArr), end(nameArr));
@@ -54,7 +54,7 @@ namespace akaifat::fat {
         }
 
         void write(std::vector<char> &dest) {
-            for (int i = 0; i < nameBytes.size(); i++)
+            for (std::int32_t i = 0; i < nameBytes.size(); i++)
                 dest[i + 12] = nameBytes[i];
         }
 
@@ -67,7 +67,7 @@ namespace akaifat::fat {
 
             if (chars[0] == 0x20) throw std::runtime_error("0x20 can not be the first character");
 
-            for (int i = 0; i < chars.size(); i++) {
+            for (std::int32_t i = 0; i < chars.size(); i++) {
                 if ((chars[i] & 0xff) != chars[i])
                     throw std::runtime_error("multi-byte character at " + std::to_string(i));
 
@@ -102,10 +102,10 @@ namespace akaifat::fat {
             checkValidName(name);
 
             std::vector<char> result(8);
-            for (int i = 0; i < 8; i++)
+            for (std::int32_t i = 0; i < 8; i++)
                 result[i] = ASCII_SPACE;
 
-            for (int i = 0; i < name.length(); i++)
+            for (std::int32_t i = 0; i < name.length(); i++)
                 result[i] = name[i];
 
             return result;
@@ -116,7 +116,7 @@ namespace akaifat::fat {
         }
 
         static void checkString(std::string &str, const std::string& strType,
-                                int minLength, int maxLength) {
+                                std::int32_t minLength, std::int32_t maxLength) {
             if (str.length() < minLength)
                 throw std::runtime_error(strType + " must have at least " + std::to_string(minLength) +
                                          " characters: " + str);

@@ -28,12 +28,12 @@ namespace akaifat::fat {
         }
 
         static std::shared_ptr<FatDirectoryEntry> createPart(std::string subName,
-                int ordinal, char checkSum, bool isLast) {
+                std::int32_t ordinal, char checkSum, bool isLast) {
                 
             char unicodechar[13];
 
             const char* unicodechar1 = subName.c_str();
-            for (int i = 0; i < 13; i++) unicodechar[i] = unicodechar1[i];
+            for (std::int32_t i = 0; i < 13; i++) unicodechar[i] = unicodechar1[i];
             
             for (auto i=subName.length(); i < 13; i++) {
                 if (i==subName.length()) {
@@ -90,7 +90,7 @@ namespace akaifat::fat {
                   fileName(std::move(_fileName)), realEntry(std::move(_realEntry)) {
         }
 
-        static std::shared_ptr<AkaiFatLfnDirectoryEntry> extract(std::shared_ptr<AkaiFatLfnDirectory> dir, int offset, int len) {
+        static std::shared_ptr<AkaiFatLfnDirectoryEntry> extract(std::shared_ptr<AkaiFatLfnDirectory> dir, std::int32_t offset, std::int32_t len) {
             auto realEntry = dir->dir->getEntry(offset + len - 1);
             std::string fileName;
             
@@ -109,7 +109,7 @@ namespace akaifat::fat {
                 /* stored in reverse order */
                 std::string name;
                 
-                for (int i = len - 2; i >= 0; i--) {
+                for (std::int32_t i = len - 2; i >= 0; i--) {
                     auto entry = dir->dir->getEntry(i + offset);
                     name.append(entry->getLfnPart());
                 }
@@ -272,7 +272,7 @@ namespace akaifat::fat {
             
             const char checkSum = realEntry->getShortName().checkSum();
             
-            int j = 0;
+            std::int32_t j = 0;
             
             for (size_t i = entrySize - 2; i > 0; i--)
             {

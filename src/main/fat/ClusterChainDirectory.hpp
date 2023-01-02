@@ -15,35 +15,35 @@ namespace akaifat::fat {
         void write(ByteBuffer &data) override {
             auto toWrite = data.remaining();
             chain->writeData(0, data);
-            long trueSize = chain->getLengthOnDisk();
+            std::int64_t trueSize = chain->getLengthOnDisk();
 
             if (trueSize > toWrite) {
-                int rest = (int) (trueSize - toWrite);
+                std::int32_t rest = (std::uint32_t) (trueSize - toWrite);
                 ByteBuffer fill(rest);
                 chain->writeData(toWrite, fill);
             }
         }
 
-        void changeSize(int entryCount) override {
+        void changeSize(std::int32_t entryCount) override {
 
             assert (entryCount >= 0);
 
-            int size = entryCount * 32;
+            std::int32_t size = entryCount * 32;
 
             if (size > MAX_SIZE)
                 throw std::runtime_error("directory would grow beyond " + std::to_string(MAX_SIZE) + " bytes");
 
-            sizeChanged(chain->setSize(std::max<long>(size, chain->getClusterSize())));
+            sizeChanged(chain->setSize(std::max<std::int64_t>(size, chain->getClusterSize())));
         }
 
     public:
-        static const int MAX_SIZE = 65536 * 32;
+        static const std::int32_t MAX_SIZE = 65536 * 32;
 
         std::shared_ptr<ClusterChain> chain;
 
         ClusterChainDirectory(const std::shared_ptr<ClusterChain>& _chain, bool isRoot)
                 : AbstractDirectory(
-                (int) (_chain->getLengthOnDisk() / 32),
+                (std::uint32_t) (_chain->getLengthOnDisk() / 32),
                 _chain->isReadOnly(), isRoot), chain(_chain) {
         }
 
@@ -60,7 +60,7 @@ namespace akaifat::fat {
             chain->setChainLength(0);
         }
 
-        long getStorageCluster() override {
+        std::int64_t getStorageCluster() override {
             return isRoot() ? 0 : chain->getStartCluster();
         }
 

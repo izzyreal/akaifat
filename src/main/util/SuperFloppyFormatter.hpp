@@ -11,29 +11,29 @@ namespace akaifat {
 class SuperFloppyFormatter {
     
 private:
-    static const int MEDIUM_DESCRIPTOR_HD = 0xf8;
-    static const int DEFAULT_FAT_COUNT = 2;
-    static const int DEFAULT_SECTORS_PER_TRACK = 32;
-    static const int DEFAULT_HEADS = 64;
+    static const std::int32_t MEDIUM_DESCRIPTOR_HD = 0xf8;
+    static const std::int32_t DEFAULT_FAT_COUNT = 2;
+    static const std::int32_t DEFAULT_SECTORS_PER_TRACK = 32;
+    static const std::int32_t DEFAULT_HEADS = 64;
     static std::string& DEFAULT_OEM_NAME() { static std::string result = "        "; return result; }
-    static const int MAX_DIRECTORY = 512;
+    static const std::int32_t MAX_DIRECTORY = 512;
     
     std::shared_ptr<BlockDevice> device;
-    int fatCount;
+    std::int32_t fatCount;
     std::string label;
     std::string oemName;
     std::shared_ptr<akaifat::fat::FatType> fatType;
-    int sectorsPerCluster;
-    int reservedSectors;
+    std::int32_t sectorsPerCluster;
+    std::int32_t reservedSectors;
     
-    int sectorsPerCluster16() {
+    std::int32_t sectorsPerCluster16() {
         if (reservedSectors != 1) throw std::runtime_error(
                                                            "number of reserved sectors must be 1");
         
         if (fatCount != 2) throw std::runtime_error(
                                                     "number of FATs must be 2");
         
-        long sectors = device->getSize() / device->getSectorSize();
+        std::int64_t sectors = device->getSize() / device->getSectorSize();
         
         if (sectors <= 8400) throw std::runtime_error(
                                                       "disk too small for FAT16 (" + std::to_string(sectors) + ")");
@@ -41,7 +41,7 @@ private:
         if (sectors > 4194304) throw std::runtime_error(
                                                         "disk too large for FAT16");
         
-        int result;
+        std::int32_t result;
         
         if (sectors > 2097152) result = 64;
         else if (sectors > 1048576) result = 32;
@@ -66,8 +66,8 @@ private:
         bs.setOemName(oemName);
     }
     
-    int rootDirectorySize(int bps, int nbTotalSectors) {
-        const int totalSize = bps * nbTotalSectors;
+    std::int32_t rootDirectorySize(std::int32_t bps, std::int32_t nbTotalSectors) {
+        const std::int32_t totalSize = bps * nbTotalSectors;
         if (totalSize >= MAX_DIRECTORY * 5 * 32) {
             return MAX_DIRECTORY;
         } else {
@@ -75,15 +75,15 @@ private:
         }
     }
     
-    int sectorsPerFat(int rootDirEntries, int totalSectors) {
-            const int bps = device->getSectorSize();
-            const int rootDirSectors =
+    std::int32_t sectorsPerFat(std::int32_t rootDirEntries, std::int32_t totalSectors) {
+            const std::int32_t bps = device->getSectorSize();
+            const std::int32_t rootDirSectors =
                     ((rootDirEntries * 32) + (bps - 1)) / bps;
-            const long tmp1 =
+            const std::int64_t tmp1 =
                     totalSectors - (reservedSectors + rootDirSectors);
-            int tmp2 = (256 * sectorsPerCluster) + fatCount;
+            std::int32_t tmp2 = (256 * sectorsPerCluster) + fatCount;
 
-            auto result = (int) ((tmp1 + (tmp2 - 1)) / tmp2);
+            auto result = (std::uint32_t) ((tmp1 + (tmp2 - 1)) / tmp2);
             
             return result;
         }
@@ -94,15 +94,15 @@ public:
     }
     
     akaifat::fat::AkaiFatFileSystem* format() {
-        const int sectorSize = device->getSectorSize();
-        const int totalSectors = (int)(device->getSize() / sectorSize);
+        const std::int32_t sectorSize = device->getSectorSize();
+        const std::int32_t totalSectors = (std::uint32_t)(device->getSize() / sectorSize);
         
         if (sectorsPerCluster == 0) throw std::runtime_error("sectorsPerCluster == 0");
         
         auto f16bs = std::make_shared<akaifat::fat::Fat16BootSector>(device);
         initBootSector(*f16bs.get());
         
-        int rootDirEntries = rootDirectorySize(device->getSectorSize(), totalSectors);
+        std::int32_t rootDirEntries = rootDirectorySize(device->getSectorSize(), totalSectors);
         
         f16bs->setRootDirEntryCount(rootDirEntries);
         f16bs->setSectorsPerFat(sectorsPerFat(rootDirEntries, totalSectors));
@@ -117,7 +117,7 @@ public:
         
         rootDir.flush();
         
-        for (int i = 0; i < f16bs->getNrFats(); i++) {
+        for (std::int32_t i = 0; i < f16bs->getNrFats(); i++) {
             fat->writeCopy(f16bs->getFatOffset(i));
         }
         

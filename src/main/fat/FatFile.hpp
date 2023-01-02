@@ -41,13 +41,13 @@ public:
         return std::make_shared<FatFile>(entry, cc);
     }
     
-    long getLength() override {
+    std::int64_t getLength() override {
         checkValid();
         
         return entry->getLength();
     }
     
-    void setLength(long length) override {
+    void setLength(std::int64_t length) override {
         checkWritable();
         
         if (getLength() == length) return;
@@ -58,7 +58,7 @@ public:
         entry->setLength(length);
     }
     
-    void read(long offset, ByteBuffer &dest) override {
+    void read(std::int64_t offset, ByteBuffer &dest) override {
         checkValid();
         
         auto len = dest.remaining();
@@ -71,11 +71,11 @@ public:
         chain.readData(offset, dest);
     }
     
-    void write(long offset, ByteBuffer &srcBuf) override {
+    void write(std::int64_t offset, ByteBuffer &srcBuf) override {
         
         checkWritable();
         
-        long lastByte = offset + srcBuf.remaining();
+        std::int64_t lastByte = offset + srcBuf.remaining();
         
         if (lastByte > getLength())
             setLength(lastByte);

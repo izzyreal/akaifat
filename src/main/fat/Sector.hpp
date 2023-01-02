@@ -10,14 +10,14 @@ namespace akaifat::fat {
 class Sector {
 private:
     std::shared_ptr<BlockDevice> device;
-    long offset;
+    std::int64_t offset;
     
     bool dirty;
     
 protected:
     ByteBuffer buffer;
 
-    Sector(std::shared_ptr<BlockDevice> _device, long _offset, int size)
+    Sector(std::shared_ptr<BlockDevice> _device, std::int64_t _offset, std::int32_t size)
     : device (_device), offset (_offset), buffer (ByteBuffer(size)), dirty (true)
     {
     }
@@ -26,29 +26,29 @@ protected:
         dirty = true;
     }
 
-    int get16(int offset) {
+    std::int32_t get16(std::int32_t offset) {
         return buffer.getShort(offset) & 0xffff;
     }
 
-    long get32(int offset) {
+    std::int64_t get32(std::int32_t offset) {
         return buffer.getInt(offset);
     }
     
-    unsigned char get8(int offset) {
+    unsigned char get8(std::int32_t offset) {
         return buffer.get(offset) & 0xff;
     }
     
-    void set16(int offset, int value) {
+    void set16(std::int32_t offset, std::int32_t value) {
         buffer.putShort(offset, (short) (value & 0xffff));
         dirty = true;
     }
 
-    void set32(int offset, long value) {
-//        buffer.putInt(offset, (int) (value & 0xffffffff));
+    void set32(std::int32_t offset, std::int64_t value) {
+//        buffer.putInt(offset, (std::uint32_t) (value & 0xffffffff));
         dirty = true;
     }
 
-    void set8(int offset, int value) {
+    void set8(std::int32_t offset, std::int32_t value) {
         if ((value & 0xff) != value) {
             throw std::runtime_error(std::to_string(value) + " too big to be stored in a single octet");
         }
@@ -57,7 +57,7 @@ protected:
         dirty = true;
     }
     
-    long getOffset() {
+    std::int64_t getOffset() {
         return offset;
     }
 
