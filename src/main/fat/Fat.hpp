@@ -23,7 +23,7 @@ private:
     void init(std::int32_t mediumDescriptor) {
         entries[0] =
                 (mediumDescriptor & 0xFF) |
-                (0xFFFFF00L & fatType->getBitMask());
+                (std::int64_t(0xFFFFF00) & fatType->getBitMask());
         entries[1] = fatType->getEofMarker();
     }
     
