@@ -1,6 +1,7 @@
 #pragma once
 #include <exception>
 #include <memory>
+#include <cstdint>
 
 namespace akaifat {
 
