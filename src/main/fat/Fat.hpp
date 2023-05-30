@@ -5,6 +5,7 @@
 
 #include <memory>
 #include <utility>
+#include <cstdint>
 
 namespace akaifat::fat {
 class Fat {

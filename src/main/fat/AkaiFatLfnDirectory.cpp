@@ -1,6 +1,7 @@
 #include "AkaiFatLfnDirectory.hpp"
 
 #include <utility>
+#include <cstdint>
 
 #include "AkaiFatLfnDirectoryEntry.hpp"
 

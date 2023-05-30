@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include "util/ByteBuffer.hpp"
 
 namespace akaifat {

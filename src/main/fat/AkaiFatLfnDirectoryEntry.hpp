@@ -1,13 +1,14 @@
 #pragma once
 
+#include <utility>
+#include <cstdint>
+
 #include "../AbstractFsObject.hpp"
 #include "../FsDirectoryEntry.hpp"
 #include "../FsDirectory.hpp"
 
 #include "AkaiFatLfnDirectory.hpp"
 #include "AkaiFatLfnDirectoryEntry.hpp"
-
-#include <utility>
 
 #include "FatDirectoryEntry.hpp"
 #include "FatFile.hpp"

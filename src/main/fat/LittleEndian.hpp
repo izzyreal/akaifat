@@ -3,6 +3,7 @@
 #include <vector>
 #include <climits>
 #include <stdexcept>
+#include <cstdint>
 
 namespace akaifat::fat {
     class LittleEndian {

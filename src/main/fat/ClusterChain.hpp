@@ -1,10 +1,11 @@
 #pragma once
 
+#include <algorithm>
+#include <cstdint>
+
 #include "../AbstractFsObject.hpp"
 
 #include "Fat.hpp"
-
-#include <algorithm>
 
 namespace akaifat::fat {
     class ClusterChain : public akaifat::AbstractFsObject {
