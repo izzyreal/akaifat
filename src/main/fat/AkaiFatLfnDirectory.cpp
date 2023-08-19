@@ -124,8 +124,6 @@ std::shared_ptr<FsDirectoryEntry> AkaiFatLfnDirectory::getEntry(std::string &nam
     return {};
 }
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "misc-no-recursion"
 void AkaiFatLfnDirectory::flush() {
     checkWritable();
 
@@ -138,7 +136,6 @@ void AkaiFatLfnDirectory::flush() {
     updateLFN();
     dir->flush();
 }
-#pragma clang diagnostic pop
 
 void AkaiFatLfnDirectory::remove(std::string name) {
     checkWritable();

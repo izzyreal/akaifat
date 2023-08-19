@@ -22,7 +22,7 @@ void demotePermissions(std::string driveLetter)
         $NewAcl.AddAccessRule($fileSystemAccessRule);\
         [io.directory]::SetAccessControl('\\\\.\\" + driveLetter + ":',$NewAcl);}\"";
 
-   int nRet = (int)ShellExecute(0,
+   auto nRet = ShellExecute(0,
        "runas",
        "powershell",
        cmd.c_str(),
@@ -58,7 +58,7 @@ void repairPermissions(std::string driveLetter)
         $NewAcl.AddAccessRule($fileSystemAccessRule);\
         [io.directory]::RemoveAccessControl('\\\\.\\" + driveLetter + ":',$NewAcl);}\"";
 
-    int nRet = (int)ShellExecute(0,
+    auto nRet = ShellExecute(0,
         "runas",
         "powershell",
         cmd.c_str(),
