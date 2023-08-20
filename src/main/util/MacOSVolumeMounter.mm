@@ -30,8 +30,11 @@ char *addfiletopath(const char *path, const char *filename)
     {
         filename++;
     }
-    outbuf = (char*) malloc(strlen(path) + strlen(filename) + 1 + (lc == NULL ? 1 : 0));
-    sprintf(outbuf, "%s%s%s", path, (lc == NULL) ? "/" : "", filename);
+
+    auto outbuf_size = strlen(path) + strlen(filename) + 1 + (lc == NULL ? 1 : 0);
+
+    outbuf = (char*) malloc(outbuf_size);
+    snprintf(outbuf, outbuf_size, "%s%s%s", path, (lc == NULL) ? "/" : "", filename);
     
     return outbuf;
 }
