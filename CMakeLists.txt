@@ -58,13 +58,6 @@ endforeach()
 
 add_library(akaifat ${_source_list_main})
 
-if (UNIX AND NOT APPLE)
-    include(FindPkgConfig)
-    pkg_search_module(udisks2 REQUIRED udisks2)
-    target_include_directories(akaifat SYSTEM PUBLIC ${udisks2_INCLUDE_DIRS})
-    target_link_libraries(akaifat ${udisks2_LIBRARIES})
-endif()
-
 if (APPLE AND NOT CMAKE_SYSTEM_NAME STREQUAL iOS)
     target_link_libraries(akaifat stdc++ "-framework Foundation -framework Security -framework DiskArbitration -framework SystemConfiguration")
 endif()
@@ -91,10 +84,4 @@ endforeach()
 
 add_executable(akaifat-tests ${_source_list_test} src/test/FatTests.cpp)
 
-if (UNIX AND NOT APPLE)
-    set(THREADS_PREFER_PTHREAD_FLAG ON)
-    find_package(Threads REQUIRED)
-    target_link_libraries(akaifat-tests Threads::Threads ${udisks2_LIBRARIES} akaifat Catch2::Catch2WithMain)
-else()
-    target_link_libraries(akaifat-tests akaifat Catch2::Catch2WithMain)
-endif()
+target_link_libraries(akaifat-tests akaifat Catch2::Catch2WithMain)
