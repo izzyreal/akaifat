@@ -29,7 +29,7 @@ void demotePermissions(std::string driveLetter)
        0,
        SW_HIDE);
 
-    if (nRet <= 32) {
+    if ((uintptr_t) nRet <= 32) {
         DWORD dw = GetLastError();
         char szMsg[250];
         FormatMessage(
@@ -65,7 +65,7 @@ void repairPermissions(std::string driveLetter)
         0,
         SW_HIDE);
 
-    if (nRet <= 32) {
+    if ((uintptr_t) nRet <= 32) {
         DWORD dw = GetLastError();
         char szMsg[250];
         FormatMessage(
