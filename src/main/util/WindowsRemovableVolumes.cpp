@@ -19,11 +19,10 @@ std::vector<char> getDriveLetters()
     while (cDriveLetter <= 'Z')
     {
         if (0 < (dwDrivemap & 0x00000001L))
-        {
             result.push_back(cDriveLetter);
-        }
+
         cDriveLetter++;
-        dwDrivemap = dwDrivemap >> 1;
+        dwDrivemap >>= 1;
     }
     return result;
 }
@@ -33,114 +32,100 @@ bool IsRemovable(char driveLetter)
     bool result = false;
     std::string volumePath = "\\\\.\\" + std::string(1, driveLetter) + ":";
 
-    HANDLE hFile = CreateFile(volumePath.c_str(), FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+    HANDLE hFile = CreateFile(volumePath.c_str(), FILE_READ_ATTRIBUTES,
+                              FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
 
     if (hFile == INVALID_HANDLE_VALUE)
         return false;
 
-    STORAGE_PROPERTY_QUERY StoragePropertyQuery;
-    StoragePropertyQuery.PropertyId = StorageDeviceProperty;
-    StoragePropertyQuery.QueryType = PropertyStandardQuery;
-    BYTE Buffer[1024];
-    LPDWORD BytesReturned = 0;
+    STORAGE_PROPERTY_QUERY query = {};
+    query.PropertyId = StorageDeviceProperty;
+    query.QueryType = PropertyStandardQuery;
+    BYTE buffer[1024];
+    DWORD bytesReturned = 0;
 
-    if (DeviceIoControl(hFile, IOCTL_STORAGE_QUERY_PROPERTY, &StoragePropertyQuery, sizeof(STORAGE_PROPERTY_QUERY), Buffer, 1024, BytesReturned, NULL))
+    if (DeviceIoControl(hFile, IOCTL_STORAGE_QUERY_PROPERTY,
+                        &query, sizeof(query),
+                        buffer, sizeof(buffer),
+                        &bytesReturned, NULL))
     {
-        PSTORAGE_DEVICE_DESCRIPTOR StorageDeviceDescriptor = (PSTORAGE_DEVICE_DESCRIPTOR)Buffer;
-        if (StorageDeviceDescriptor->RemovableMedia)
-        {
+        auto* desc = reinterpret_cast<PSTORAGE_DEVICE_DESCRIPTOR>(buffer);
+        if (desc->RemovableMedia)
             result = true;
-        }
     }
 
     CloseHandle(hFile);
-    hFile = INVALID_HANDLE_VALUE;
     return result;
 }
 
 void RemovableVolumes::detectChanges()
 {
     auto driveLetters = getDriveLetters();
-    
+
     for (auto driveLetter : driveLetters)
     {
-        auto removable = IsRemovable(driveLetter);
+        if (!IsRemovable(driveLetter)) continue;
 
-        if (!removable) continue;
-
-        std::string driveLetterStr = std::string(1, driveLetter);
-
+        std::string driveLetterStr(1, driveLetter);
         std::string path = driveLetterStr + ":\\";
-        LPCSTR lpRootPathName = path.c_str();
-        DWORD lpSectorsPerCluster = 0;
-        DWORD lpBytesPerSector = 0;
-        DWORD lpNumberOfFreeClusters = 0;
-        DWORD lpTotalNumberOfClusters = 0;
-        
-        unsigned long mediaSize = 0;
+        LPCSTR rootPath = path.c_str();
 
-        if (GetDiskFreeSpace(
-            lpRootPathName,
-            &lpSectorsPerCluster,
-            &lpBytesPerSector,
-            &lpNumberOfFreeClusters,
-            &lpTotalNumberOfClusters
-        )) {
-            unsigned long sectorsPerCluster = (unsigned long) lpSectorsPerCluster;
-            unsigned long bytesPerSector = (unsigned long)lpBytesPerSector;
-            unsigned long numberOfFreeClusters = (unsigned long)lpNumberOfFreeClusters;
-            unsigned long totalNumberOfClusters = (unsigned long)lpTotalNumberOfClusters;
-            
-            mediaSize = bytesPerSector * sectorsPerCluster * totalNumberOfClusters;
-        }
+        DWORD sectorsPerCluster = 0, bytesPerSector = 0;
+        DWORD freeClusters = 0, totalClusters = 0;
 
+        if (!GetDiskFreeSpace(rootPath, &sectorsPerCluster, &bytesPerSector,
+                              &freeClusters, &totalClusters))
+            continue;
+
+        uint64_t mediaSize = static_cast<uint64_t>(bytesPerSector)
+                           * sectorsPerCluster * totalClusters;
         if (mediaSize == 0) continue;
 
-        char volumeName[11];
+        char volumeName[11] = {0};
+        char fileSystemName[8] = {0};
         std::string volumeNameStr;
 
-        char fileSystemName[8];
-
-        if (GetVolumeInformation(
-            lpRootPathName,
-            (LPTSTR)volumeName,
-            11,
-            (LPDWORD)0,
-            (LPDWORD)0,
-            (LPDWORD)0,
-            (LPTSTR)fileSystemName,
-            8))
+        if (GetVolumeInformation(rootPath, volumeName, sizeof(volumeName),
+                                 nullptr, nullptr, nullptr, fileSystemName,
+                                 sizeof(fileSystemName)))
         {
             if (strcmp(fileSystemName, "FAT") != 0) continue;
             volumeNameStr = volumeName;
         }
 
-        char volumeGUID[50];
+        char volumeGUID[50] = {0};
         std::string volumeGUIDStr;
-        
-        if (GetVolumeNameForVolumeMountPoint(
-            lpRootPathName,
-            (LPSTR)volumeGUID,
-            50)
-        )
-        {
+        if (GetVolumeNameForVolumeMountPoint(rootPath, volumeGUID, sizeof(volumeGUID)))
             volumeGUIDStr = volumeGUID;
+
+        bool isNew = false;
+        {
+            std::lock_guard<std::mutex> lock(listenersMutex);
+            isNew = volumes.emplace(volumeGUIDStr).second;
         }
 
-        if (volumes.emplace(volumeGUID).second)
+        if (isNew)
         {
-            for (auto& l : listeners)
-                l->processChange(RemovableVolume{ volumeGUID, driveLetterStr, volumeName, mediaSize });
+            std::vector<VolumeChangeListener*> snapshot;
+            {
+                std::lock_guard<std::mutex> lock(listenersMutex);
+                snapshot = listeners;
+            }
+
+            for (auto* l : snapshot)
+                l->processChange(RemovableVolume{volumeGUIDStr, driveLetterStr, volumeNameStr, mediaSize});
         }
     }
 }
 
 void RemovableVolumes::init()
 {
-    running = true;
-    
-    changeListenerThread = std::thread([&]{
-        while (running)
+    std::lock_guard<std::mutex> lk(listenersMutex);
+    if (running.load()) return;
+    running.store(true);
+
+    changeListenerThread = std::thread([this] {
+        while (running.load())
         {
             detectChanges();
             std::this_thread::sleep_for(std::chrono::milliseconds(500));

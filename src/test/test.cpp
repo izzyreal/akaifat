@@ -53,10 +53,18 @@ TEST_CASE("list removable volumes", "[volumes]")
 
     class TestChangeListener : public VolumeChangeListener {
     public:
+        std::mutex m;
         std::vector<RemovableVolume> volumes;
+
         void processChange(RemovableVolume v) override {
+            std::lock_guard<std::mutex> lk(m);
             printf("We can do what we want now with: %s\n", v.deviceName.c_str());
-            volumes.emplace_back(v);
+            volumes.emplace_back(std::move(v));
+        }
+
+        std::vector<RemovableVolume> snapshot() {
+            std::lock_guard<std::mutex> lk(m);
+            return volumes;
         }
     };
 
@@ -66,9 +74,12 @@ TEST_CASE("list removable volumes", "[volumes]")
 
     removableVolumes.init();
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-    for (auto& v : listener.volumes)
+    for (int i = 0; i < 20 && listener.snapshot().empty(); ++i)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    
+    for (auto& v : listener.snapshot())
     {
         auto name = v.deviceName;
         auto mediaSize = v.mediaSize;

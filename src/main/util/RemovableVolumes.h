@@ -15,6 +15,8 @@
 #include <vector>
 #include <string>
 #include <thread>
+#include <atomic>
+#include <mutex>
 
 namespace akaifat::util {
 struct RemovableVolume {
@@ -35,15 +37,13 @@ public:
     RemovableVolumes() = default;
     ~RemovableVolumes()
     {
-        running = false;
+        running.store(false);
 
 #if !TARGET_OS_IOS
-        while (!changeListenerThread.joinable())
+        if (changeListenerThread.joinable())
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            changeListenerThread.join();
         }
-
-        changeListenerThread.join();
 #endif
     }
 
@@ -58,9 +58,10 @@ public:
 #endif
 
 private:
-    bool running = false;
+    std::atomic<bool> running{false};
     std::thread changeListenerThread;
     std::vector<VolumeChangeListener*> listeners;
+    std::mutex listenersMutex;
 
 #ifdef __APPLE__
 #if !TARGET_OS_IOS
