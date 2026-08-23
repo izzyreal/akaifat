@@ -7,7 +7,7 @@
     #endif
 #elif _WIN32
 #include <set>
-#elif __linux__
+#elif defined(__linux__) && !defined(__ANDROID__)
 #include <pthread.h>
 #include <udisks/udisks.h>
 #endif
@@ -51,7 +51,7 @@ public:
     {
         listeners.emplace_back(l);
     }
-#if (defined __APPLE__ && TARGET_OS_IOS)
+#if (defined __APPLE__ && TARGET_OS_IOS) || defined(__ANDROID__)
     void init(){}
 #else
     void init();
@@ -71,7 +71,7 @@ private:
 #elif _WIN32
     std::set<std::string> volumes;
     void detectChanges();
-#elif __linux__
+#elif defined(__linux__) && !defined(__ANDROID__)
     static void on_object_added(GDBusObjectManager *manager,
                             GDBusObject *dbus_object, gpointer user_data);
 

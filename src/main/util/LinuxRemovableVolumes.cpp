@@ -1,4 +1,4 @@
-#if defined (__linux__)
+#if defined (__linux__) && !defined (__ANDROID__)
 #include "RemovableVolumes.h"
 
 #include <linux/fs.h>

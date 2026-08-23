@@ -6,7 +6,7 @@ set(CATCH_CONFIG_NO_CPP17_UNCAUGHT_EXCEPTIONS ON)
 
 FetchContent_Declare(Catch2
   GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-  GIT_TAG        v3.11.0
+  GIT_TAG        b3fb4b9feafcd8d91c5cb510a4775143fdbef02f
   SOURCE_DIR     ${CMAKE_SOURCE_DIR}/deps/Catch2
 )
 
@@ -63,7 +63,7 @@ endforeach()
 
 add_library(akaifat ${_source_list_main})
 
-if (UNIX AND NOT APPLE)
+if(UNIX AND NOT APPLE AND NOT ANDROID)
     include(FindPkgConfig)
     pkg_search_module(udisks2 REQUIRED udisks2)
     target_include_directories(akaifat SYSTEM PUBLIC ${udisks2_INCLUDE_DIRS})
@@ -96,7 +96,7 @@ endforeach()
 
 add_executable(akaifat-tests ${_source_list_test} src/test/FatTests.cpp)
 
-if (UNIX AND NOT APPLE)
+if(UNIX AND NOT APPLE AND NOT ANDROID)
     set(THREADS_PREFER_PTHREAD_FLAG ON)
     find_package(Threads REQUIRED)
     target_link_libraries(akaifat-tests Threads::Threads ${udisks2_LIBRARIES} akaifat Catch2::Catch2WithMain)

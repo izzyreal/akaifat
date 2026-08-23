@@ -1,13 +1,18 @@
-#ifdef __APPLE__
+#if defined(__APPLE__)
 #include <TargetConditionals.h>
-#if TARGET_OS_IOS
+#endif
+
+#if (defined(__APPLE__) && TARGET_OS_IOS) || defined(__ANDROID__)
 
 #include "VolumeMounter.h"
 
 using namespace akaifat::util;
 
-std::fstream VolumeMounter::mount(std::string volume, bool readOnly) { return std::fstream(); }
-void VolumeMounter::unmount(std::string volume){}
+std::fstream VolumeMounter::mount(std::string, bool)
+{
+    return {};
+}
 
-#endif
+void VolumeMounter::unmount(std::string) {}
+
 #endif
