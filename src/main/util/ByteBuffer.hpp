@@ -37,11 +37,11 @@ public:
     }
     
     std::uint32_t getInt(std::int64_t index) {
-        char chars[4];
-        for (std::int32_t i = 0; i < 4; i++)
-            chars[i] = buf[index + i];
+        std::uint32_t result = 0;
+        for (int i = 0; i < 4; ++i)
+            result |= static_cast<std::uint32_t>(static_cast<unsigned char>(buf[index + i])) << (i * 8);
         pos += 4;
-        return *(std::uint32_t *) chars;
+        return result;
     }
     
     short getShort() {
@@ -49,9 +49,11 @@ public:
     }
     
     short getShort(std::int64_t index) {
-        short result = (buf[index] & 0xff) | (buf[index + 1] << 8);
+        const auto bits = static_cast<unsigned char>(buf[index]) |
+                          (static_cast<unsigned char>(buf[index + 1]) << 8);
+        const auto result = bits >= 0x8000 ? bits - 0x10000 : bits;
         pos += 2;
-        return result;
+        return static_cast<short>(result);
     }
     
     std::int64_t position() { return pos; }
