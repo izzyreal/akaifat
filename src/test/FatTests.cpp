@@ -81,3 +81,30 @@ TEST_CASE("ByteBuffer reads full-width little-endian integers at odd offsets",
         REQUIRE(buffer.position() == 5);
     }
 }
+
+TEST_CASE("FAT12 packed entries preserve their neighbour and cross sector boundaries", "[fat][fat12]")
+{
+    Fat12Type type;
+    std::vector<char> bytes(1536, 0);
+    // Independent on-disk oracle: ABC, DEF encode as BC FA DE.
+    type.writeEntry(bytes, 0, 0xabc);
+    type.writeEntry(bytes, 1, 0xdef);
+    REQUIRE((bytes[0] & 255) == 0xbc);
+    REQUIRE((bytes[1] & 255) == 0xfa);
+    REQUIRE((bytes[2] & 255) == 0xde);
+    for (const int index : {0, 1, 340, 341, 342, 1022, 1023})
+    {
+        CAPTURE(index);
+        const auto neighbour = index ^ 1;
+        type.writeEntry(bytes, neighbour, 0xa5b);
+        for (const int value : {0, 2, 0x123, 0xff7, 0xff8, 0xfff})
+        {
+            type.writeEntry(bytes, index, value);
+            CHECK(type.readEntry(bytes, index) == value);
+            CHECK(type.readEntry(bytes, neighbour) == 0xa5b);
+        }
+    }
+    CHECK(type.isEofCluster(0xff8));
+    CHECK_FALSE(type.isEofCluster(0xff7));
+    REQUIRE_THROWS(type.readEntry(bytes, 1024));
+}

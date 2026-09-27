@@ -65,6 +65,33 @@ namespace akaifat::fat {
         }
     };
 
+    // Allocation encoding is independent of Akai's directory naming convention.
+    class Fat12Type : public FatType {
+    public:
+        Fat12Type() : FatType(4084, 0xFFF, 1.5f, "FAT12   ") {}
+
+        std::int64_t readEntry(std::vector<char> &data, std::int32_t index) override {
+            const auto offset = index + index / 2;
+            const auto pair = (data.at(offset) & 0xff) |
+                              ((data.at(offset + 1) & 0xff) << 8);
+            return index & 1 ? pair >> 4 : pair & 0xfff;
+        }
+
+        void writeEntry(std::vector<char> &data, std::int32_t index,
+                        std::int64_t entry) override {
+            const auto offset = index + index / 2;
+            if (index & 1) {
+                data.at(offset) = static_cast<char>((data.at(offset) & 0x0f) |
+                                                    ((entry & 0x0f) << 4));
+                data.at(offset + 1) = static_cast<char>((entry >> 4) & 0xff);
+            } else {
+                data.at(offset) = static_cast<char>(entry & 0xff);
+                data.at(offset + 1) = static_cast<char>((data.at(offset + 1) & 0xf0) |
+                                                       ((entry >> 8) & 0x0f));
+            }
+        }
+    };
+
     class Fat16Type : public FatType {
 
     public:

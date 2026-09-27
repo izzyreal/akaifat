@@ -72,6 +72,9 @@ namespace akaifat::fat {
             auto rootDirEntryCount = getRootDirEntryCount();
             auto bytesPerSector = getBytesPerSector();
 
+            if (bytesPerSector <= 0 || getSectorsPerCluster() <= 0)
+                throw std::runtime_error("invalid FAT geometry");
+
             std::int64_t rootDirSectors = ((rootDirEntryCount * 32) +
                                    (bytesPerSector - 1)) / bytesPerSector;
 
@@ -90,9 +93,16 @@ namespace akaifat::fat {
             if (clusterCount > MAX_FAT16_CLUSTERS)
                 throw std::runtime_error("too many clusters for FAT16: " + std::to_string(clusterCount));
 
-            static auto result = new Fat16Type();
+            if (clusterCount <= 0)
+                throw std::runtime_error("no data clusters");
 
-            return result;
+            // Retain compatibility with small explicitly labelled Akai FAT16
+            // volumes. Otherwise FAT12/16 share a BPB and use cluster count.
+            static Fat12Type fat12;
+            static Fat16Type fat16;
+            return clusterCount < 4085 && getFileSystemTypeLabel() != "FAT16   "
+                       ? static_cast<FatType *>(&fat12)
+                       : static_cast<FatType *>(&fat16);
         }
 
 
